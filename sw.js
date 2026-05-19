@@ -1,5 +1,5 @@
 const CACHE = 'ai-adv-v1';
-const ASSETS = ['/'];
+const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
