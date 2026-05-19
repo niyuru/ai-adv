@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f14">
+<title>AI ADV · 셀프 학습 가이드</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f0f14;--surface:#16161f;--card:#1c1c28;--border:#2a2a3d;
+    --text:#e8e6f0;--muted:#8884a0;--accent:#7c6aff;--accent-light:#a594ff;
+    --green:#3ecf8e;--yellow:#f4c430;--red:#ff6b6b;
+  }
+  html,body{background:var(--bg);color:var(--text);min-height:100vh;
+    font-family:'DM Mono','Fira Code','SF Mono',ui-monospace,monospace;
+    -webkit-font-smoothing:antialiased;font-size:14px;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;}
+  pre,code{font-family:inherit;}
+
+  /* ── Header ── */
+  #header{
+    background:linear-gradient(135deg,#1a1830 0%,#0f0f14 60%,#1a1330 100%);
+    border-bottom:1px solid var(--border);
+    padding:24px 20px 16px;position:sticky;top:0;z-index:100;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  }
+  #header-inner{max-width:860px;margin:0 auto;}
+  .badge{display:inline-block;background:rgba(124,106,255,0.15);
+    border:1px solid var(--accent);color:var(--accent-light);
+    font-size:10px;font-weight:700;letter-spacing:.12em;
+    padding:3px 10px;border-radius:4px;margin-bottom:10px;text-transform:uppercase;}
+  #app-title{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px;
+    background:linear-gradient(90deg,var(--text) 0%,var(--accent-light) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #app-sub{font-size:12px;color:var(--muted);}
+
+  /* ── Book tabs ── */
+  #book-tabs{display:flex;overflow-x:auto;scrollbar-width:none;
+    padding:16px 20px 0;max-width:900px;margin:0 auto;
+    border-bottom:1px solid var(--border);}
+  #book-tabs::-webkit-scrollbar{display:none;}
+  .book-tab{flex:0 0 auto;padding:9px 16px;background:none;border:none;
+    border-bottom:2px solid transparent;font-size:12px;font-weight:400;
+    color:var(--muted);transition:all .2s;white-space:nowrap;}
+  .book-tab.active{font-weight:700;border-bottom-color:var(--tab-color)!important;color:var(--tab-light)!important;}
+
+  /* ── Chapter nav ── */
+  #ch-nav{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+    padding:14px 20px 0;max-width:900px;margin:0 auto;}
+  #ch-nav::-webkit-scrollbar{display:none;}
+  .ch-btn{flex:0 0 auto;padding:7px 14px;border-radius:8px;
+    border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-size:11px;font-weight:600;
+    transition:all .2s;white-space:nowrap;}
+  .ch-btn.active{color:var(--tab-light)!important;border-color:var(--tab-color)!important;background:var(--tab-glow)!important;}
+
+  /* ── Main content ── */
+  #main{max-width:860px;margin:0 auto;padding:24px 20px 80px;}
+
+  /* Chapter header */
+  .ch-header{display:flex;align-items:center;gap:12px;
+    margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .ch-emoji-box{font-size:28px;width:52px;height:52px;display:flex;
+    align-items:center;justify-content:center;
+    background:var(--tab-glow);border:1px solid var(--border);border-radius:12px;flex-shrink:0;}
+  .ch-meta{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+  .ch-name{font-size:20px;font-weight:800;letter-spacing:-.01em;}
+
+  /* Tabs */
+  .tab-row{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;scrollbar-width:none;}
+  .tab-row::-webkit-scrollbar{display:none;}
+  .tab-btn{flex:0 0 auto;padding:9px 18px;background:none;border:none;
+    border-bottom:2px solid transparent;color:var(--muted);
+    font-size:12px;font-weight:400;transition:all .2s;white-space:nowrap;}
+  .tab-btn.active{font-weight:700;color:var(--tab-light)!important;
+    border-bottom-color:var(--tab-color)!important;}
+
+  /* Section title */
+  .sec-title{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--muted);
+    text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+  /* Concept grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+  .concept-card{background:var(--card);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;}
+  .concept-term{font-size:12px;font-weight:700;margin-bottom:6px;color:var(--tab-light);}
+  .concept-desc{font-size:11.5px;color:var(--text);line-height:1.75;white-space:pre-line;}
+
+  /* Keypoints */
+  .kp-item{display:flex;align-items:flex-start;gap:10px;
+    padding:12px 14px;background:rgba(244,196,48,.07);
+    border:1px solid rgba(244,196,48,.2);border-radius:10px;margin-bottom:8px;}
+  .kp-item span:first-child{font-size:14px;flex-shrink:0;}
+  .kp-item span:last-child{font-size:12px;color:var(--text);line-height:1.7;}
+
+  /* Code */
+  .code-block{background:#0a0a10;border:1px solid var(--border);border-radius:10px;
+    padding:14px 16px;font-size:11.5px;color:#a8ff78;line-height:1.8;
+    overflow-x:auto;white-space:pre;}
+
+  /* Quiz */
+  .quiz-card{background:var(--card);border:1px solid var(--border);
+    border-radius:10px;padding:18px 20px;margin-bottom:10px;}
+  .quiz-q{font-size:13px;font-weight:600;margin-bottom:12px;line-height:1.55;}
+  .opt-btn{display:block;width:100%;text-align:left;padding:9px 13px;
+    margin-bottom:7px;border-radius:7px;border:1px solid var(--border);
+    background:transparent;color:var(--text);font-size:12px;transition:all .2s;}
+  .opt-btn:hover:not(.disabled){border-color:var(--accent);background:rgba(124,106,255,.08);}
+  .opt-btn.correct{border-color:var(--green)!important;background:rgba(62,207,142,.12)!important;color:var(--green)!important;}
+  .opt-btn.wrong{border-color:var(--red)!important;background:rgba(255,107,107,.1)!important;color:var(--red)!important;}
+  .opt-btn.disabled{cursor:default;}
+  .exp-box{margin-top:9px;padding:9px 13px;
+    background:rgba(124,106,255,.08);border:1px solid var(--border);
+    border-radius:7px;font-size:11.5px;color:var(--muted);line-height:1.6;}
+  .progress-bar{height:3px;background:var(--border);border-radius:2px;
+    overflow:hidden;margin-bottom:16px;}
+  .progress-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+  .score-box{text-align:center;padding:24px;background:var(--card);
+    border:1px solid var(--border);border-radius:12px;margin-top:14px;}
+  .submit-btn{display:block;width:100%;text-align:center;padding:12px;
+    border-radius:8px;font-size:13px;font-weight:700;
+    color:#fff;margin-top:8px;transition:all .2s;}
+  .reset-btn{margin-top:14px;padding:7px 22px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);border-radius:6px;font-size:11px;}
+
+  /* Install banner */
+  #install-banner{display:none;position:fixed;bottom:0;left:0;right:0;
+    background:var(--surface);border-top:1px solid var(--border);
+    padding:14px 20px;z-index:200;display:flex;align-items:center;justify-content:space-between;}
+  #install-banner.hidden{display:none!important;}
+  #install-banner p{font-size:12px;color:var(--muted);}
+  #install-btn{padding:8px 18px;border-radius:8px;background:var(--accent);
+    color:#fff;font-size:12px;font-weight:700;border:none;}
+  #dismiss-btn{padding:8px 14px;background:transparent;color:var(--muted);
+    font-size:12px;border:1px solid var(--border);border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-inner">
+    <div class="badge">Samsung SDS · AI 개발 교재</div>
+    <h1 id="app-title">한번에 끝내는 AI 개발</h1>
+    <p id="app-sub">셀프 학습 가이드 · 개념 정리 + 실전 퀴즈</p>
+  </div>
+</div>
+
+<div id="book-tabs"></div>
+<div id="ch-nav"></div>
+<div id="main"></div>
+
+<div id="install-banner" class="hidden">
+  <p>📱 홈 화면에 추가하면 앱처럼 사용할 수 있어요</p>
+  <div style="display:flex;gap:8px">
+    <button id="dismiss-btn">닫기</button>
+    <button id="install-btn">추가하기</button>
+  </div>
+</div>
+
+<script>
+const CURRICULUM = [{"id":"ch1","chapter":"1","book":"1","title":"Python 개발 환경 구축","emoji":"🛠️","concepts":[{"term":"Python이란?","desc":"AI·머신러닝 개발에 가장 많이 쓰이는 프로그래밍 언어. 문법이 간결하고 배우기 쉬우며, 방대한 라이브러리를 보유. 특히 LLM 개발에서 가장 많이 활용됨."},{"term":"Python 설치","desc":"python.org에서 최신 버전 다운로드. 설치 시 반드시 'Add python.exe to PATH' 옵션을 체크해야 터미널에서 바로 실행 가능."},{"term":"VS Code 설치","desc":"https://code.visualstudio.com 에서 무료 다운로드. 오픈소스 AI 코드 에디터로 Python 개발에 최적화된 환경 제공."},{"term":"Python 실행 방법","desc":"① 터미널(cmd/bash)에서 실행: python –version 으로 확인, python 입력 후 >>> print('Hello, Python!')\n② VS Code에서 실행: 새 파일 작성 후 Shift+F5 또는 터미널에서 python 파일명.py"},{"term":"가상 환경(venv)","desc":"프로젝트별 독립적인 환경 구성. 라이브러리 버전 충돌 방지를 위해 프로젝트마다 별도의 가상 환경을 만들어서 개발하는 것을 권장."},{"term":".py vs .ipynb","desc":".py (Python Script): 일반 Python 코드 파일, 실제 개발에 적합.\n.ipynb (Jupyter Notebook): JSON 형식으로 저장된 노트북 파일, 코드+결과+문서(Markdown) 함께 관리 가능, 데이터 분석·교육·실험에 적합."}],"quiz":[{"q":"Python 설치 시 반드시 체크해야 하는 옵션은?","options":["Install for all users","Add python.exe to PATH","Install pip","Create shortcuts"],"answer":1,"exp":"PATH에 추가해야 터미널 어디서든 python 명령어를 사용할 수 있습니다."},{"q":"데이터 분석·교육·실험에 적합한 파일 형식은?","options":[".py",".json",".ipynb",".txt"],"answer":2,"exp":".ipynb(Jupyter Notebook)는 코드+결과+문서를 함께 관리할 수 있어 분석과 교육에 최적입니다."},{"q":"프로젝트마다 독립적인 환경을 만드는 이유는?","options":["코드 실행 속도 향상","라이브러리 버전 충돌 방지","저장 공간 절약","인터넷 연결 없이 사용"],"answer":1,"exp":"프로젝트별로 필요한 라이브러리 버전이 다를 수 있어 가상 환경으로 분리해서 관리합니다."}],"keypoints":["Python 설치 시 반드시 'Add python.exe to PATH' 체크",".py = 실제 개발용 스크립트 / .ipynb = 데이터 분석·교육용 노트북","가상 환경(venv) = 프로젝트별 라이브러리 버전 충돌 방지","pip install 패키지명 = 외부 라이브러리 설치 명령어","VS Code = Python 개발에 최적화된 무료 오픈소스 에디터"]},{"id":"ch2","chapter":"2","book":"1","title":"변수와 자료형","emoji":"📦","concepts":[{"term":"변수(Variable)","desc":"데이터를 저장하는 메모리 공간. Python은 동적 타이핑(실행 시점에 타입 결정)이므로 var, let 같은 키워드 불필요. 타입 변경도 자유롭게 가능."},{"term":"PEP8 변수 명명 규칙","desc":"의미 있는 이름 사용 (a, b ❌ → user_name ✅)\n예약어(def, if 등) 사용 금지\n특수문자는 언더바(_)만 허용\n상수는 대문자로 작성: MAX_RETRY = 3"},{"term":"기본 자료형 — int/float","desc":"int(정수): 메모리 제한 없는 큰 수 표현 가능. 용도: 카운터, 인덱스, ID값. 예: 1234, -99\nfloat(실수): 부동소수점 방식(정밀도 한계 존재). 용도: 비율, 측정값. 예: 0.568, 3.14"},{"term":"기본 자료형 — str / bool / None","desc":"str: 불변(immutable) 시퀀스. 텍스트 데이터. 예: 'abcd', \"hello\"\nbool: True/False(내부적으로 1/0), 논리연산자, 조건 판단에 사용.\nNone: 값이 없음을 나타냄, 초기값·실패 표시에 사용."},{"term":"컬렉션 자료형","desc":"List [원소]: 순서 있고 값 변경 가능\nTuple (원소): 순서 있고 값 변경 불가 — 예: (23, 92)\nDictionary {키:값}: 키로 값을 찾는 구조 — 예: {'name':'철수', 'age':27}"},{"term":"Truthy vs Falsy / 타입 변환","desc":"Falsy(거짓으로 평가): None, False, 0, 0.0, '', [], (), {}\nTruthy: 위 Falsy를 제외한 모든 값\n\ntype(변수): 타입 확인 / isinstance(변수, 타입): 타입 일치 여부\nint('123') → 123, str(100) → '100' (형변환)"},{"term":"조건문 (if / elif / else)","desc":"True/False로 처리되는 조건식을 이용해 프로그램 분기 처리.\n논리연산자: and(모든 조건이 참), or(하나라도 참), not(조건 반전)"},{"term":"반복문 — for / while","desc":"for 변수 in 이터러블: 특정 시퀀스를 순회\nrange(), enumerate(), zip()과 연계\nwhile 조건: 조건이 True인 동안 반복\nbreak(즉시 종료), continue(다음으로), pass(자리 표시), else(정상 종료 시)"}],"quiz":[{"q":"Python 변수의 특징으로 맞는 것은?","options":["선언 시 반드시 타입을 명시해야 한다","실행 시점에 타입이 결정되는 동적 타이핑이다","한 번 정한 타입은 변경할 수 없다","var 키워드로 선언해야 한다"],"answer":1,"exp":"Python은 동적 타이핑 언어로 실행 시점에 타입이 결정되며, 별도 키워드 없이 바로 변수명 = 값으로 선언합니다."},{"q":"다음 중 Falsy 값이 아닌 것은?","options":["0","''(빈 문자열)","'0'(문자열 0)","[]"],"answer":2,"exp":"'0'은 비어있지 않은 문자열이므로 Truthy입니다. 0(숫자)만 Falsy입니다."},{"q":"순서가 있고 값 변경이 불가능한 자료형은?","options":["List","Dictionary","Tuple","Set"],"answer":2,"exp":"Tuple은 소괄호()로 표현하며 순서가 있고 한번 생성하면 값을 변경할 수 없습니다."},{"q":"PEP8 규칙상 상수는 어떻게 작성하는가?","options":["camelCase로 작성","소문자로 작성","대문자와 언더바로 작성","앞에 const를 붙임"],"answer":2,"exp":"상수는 MAX_RETRY = 3 처럼 대문자와 언더바(_)를 사용해 작성합니다."}],"keypoints":["Python = 동적 타이핑 — 실행 시점에 타입 결정, 별도 키워드 불필요","Falsy 값: None, False, 0, 0.0, '', [], (), {} — 나머지는 모두 Truthy","List(변경 가능) vs Tuple(변경 불가) vs Dict(키-값 쌍)","PEP8 상수 표기: 대문자 + 언더바 (예: MAX_RETRY = 3)","for + enumerate() = 인덱스와 값을 동시에 순회 / break·continue·pass 구분 필수"]},{"id":"ch3","chapter":"4","book":"1","title":"함수와 모듈","emoji":"🔧","concepts":[{"term":"함수(Function)란?","desc":"특정 코드나 기능을 반복 사용하기 위해 입력→처리→출력을 반환하는 코드 블록. DRY 원칙(Don't Repeat Yourself): 같은 코드 반복 피하기, 재사용성과 가독성 고려."},{"term":"함수 구성 요소","desc":"시그니처: def 함수명(parameter1, parameter2)\n문서화: \"\"\"함수 설명(docstring)\"\"\"\n로직: result = parameter1 + parameter2\n반환: return result"},{"term":"매개변수 종류","desc":"위치 인자: 순서에 따라 값이 전달\n키워드 매개변수: greet(age=25, name='철수') — 순서 무관\n기본값 매개변수: def connect(host='localhost', port=3306)\n가변 매개변수: def log(*args, **kwargs)"},{"term":"Python Module","desc":"Python에서 .py 파일 하나는 모듈을 의미. import 구문을 통해 다른 코드에서 사용 가능. 다른 모듈의 함수와 변수를 불러와 재사용."},{"term":"패키지(Package)와 라이브러리","desc":"패키지: 하나의 폴더에 여러 모듈을 묶어서 저장하는 형식. from my_package import math_utils\n라이브러리: 모듈과 패키지를 모두 포함하는 재사용 가능한 코드 묶음 (NumPy, Pandas, Transformers 등). 설치: pip install numpy"}],"quiz":[{"q":"DRY 원칙이 의미하는 것은?","options":["코드를 짧게 작성하라","같은 코드를 반복하지 마라","변수명을 짧게 줄여라","주석을 달지 마라"],"answer":1,"exp":"DRY = Don't Repeat Yourself. 같은 로직을 함수로 만들어 한 곳에서 관리하면 유지보수가 쉬워집니다."},{"q":"def connect(host='localhost', port=3306) 에서 host와 port는?","options":["필수 매개변수","기본값 매개변수","가변 매개변수","키워드 전용 매개변수"],"answer":1,"exp":"기본값이 설정된 매개변수는 호출 시 생략 가능합니다. 생략하면 기본값이 사용됩니다."},{"q":"외부 라이브러리를 설치하는 명령어는?","options":["python install numpy","import numpy","pip install numpy","get numpy"],"answer":2,"exp":"pip는 Python 패키지 관리자입니다. pip install 패키지명으로 외부 라이브러리를 설치합니다."}],"keypoints":["DRY 원칙 = Don't Repeat Yourself, 같은 코드 반복 금지 → 함수로 재사용","기본값 매개변수 = 호출 시 생략 가능, 생략하면 기본값 사용","가변 매개변수: *args(위치 인자 튜플), **kwargs(키워드 인자 딕셔너리)","모듈 = .py 파일 하나 / 패키지 = 여러 모듈을 폴더로 묶은 것","외부 라이브러리 설치: pip install 패키지명"]},{"id":"ch4","chapter":"5","book":"1","title":"자료구조와 파일 입출력","emoji":"💾","concepts":[{"term":"List Comprehension","desc":"코드를 간결하게 만드는 방식.\n기존: result=[]\nfor x in range(10):\n  if x%2==0: result.append(x**2)\n\n압축: result = [x**2 for x in range(10) if x%2==0]"},{"term":"파일 입출력","desc":"open()을 통해 파일 읽기/쓰기.\n모드: 'r'(읽기), 'w'(쓰기), 'a'(추가), 'b'(바이너리)\n\nwith open('file.txt', 'r', encoding='utf-8') as f:\n    text = f.read()\n\nwith open('file.txt', 'w') as f:\n    f.write('Hello!')"},{"term":"JSON","desc":"경량 데이터 교환 형식. 사람도 읽기 쉽고 기계도 처리하기 쉬움. Python의 dict와 유사한 구조.\njson.dumps(data): Python→JSON 문자열\njson.loads(json_str): JSON 문자열→Python"},{"term":"예외 처리 (try-except)","desc":"If문으로 미리 방어하기보다, 실행 중 예외가 생긴 시점에 포착해 해결하는 것이 Python 코딩 스타일.\ntry → except SomeError → except Exception as e → else(에러 없이 실행됨) → finally(항상 실행)"}],"quiz":[{"q":"[x**2 for x in range(5)] 의 결과는?","options":["[1, 4, 9, 16, 25]","[0, 1, 4, 9, 16]","[0, 1, 2, 3, 4]","[1, 2, 3, 4, 5]"],"answer":1,"exp":"range(5)는 0~4이므로 0²=0, 1²=1, 2²=4, 3²=9, 4²=16 → [0, 1, 4, 9, 16]"},{"q":"파일을 읽기 전용으로 열 때 사용하는 모드는?","options":["'w'","'a'","'r'","'b'"],"answer":2,"exp":"'r'은 read(읽기), 'w'는 write(쓰기), 'a'는 append(추가), 'b'는 binary입니다."},{"q":"try-except에서 finally 블록은 언제 실행되는가?","options":["예외가 발생했을 때만","예외가 없을 때만","항상 실행됨","return 이후에만"],"answer":2,"exp":"finally는 예외 발생 여부와 관계없이 항상 실행됩니다. 리소스 정리에 자주 사용합니다."}],"keypoints":["List Comprehension = [표현식 for 변수 in 이터러블 if 조건] 한 줄로 리스트 생성","파일 모드: 'r'(읽기), 'w'(쓰기), 'a'(추가), 'b'(바이너리) — with 문으로 자동 닫기","json.dumps() = Python→JSON 문자열 / json.loads() = JSON 문자열→Python","try-except 실행 순서: try → except → else(에러 없을 때) → finally(항상)","finally = 예외 발생 여부와 무관하게 항상 실행 (리소스 정리에 사용)"]},{"id":"ch5","chapter":"6","book":"1","title":"객체지향 프로그래밍(OOP)","emoji":"🏗️","concepts":[{"term":"클래스(Class)","desc":"객체지향 프로그래밍(OOP)의 기본 단위. 데이터(속성)와 기능(메서드)을 하나로 묶은 설계도. Class로 구성하고 instance(인스턴스)를 생성하여 활용."},{"term":"__init__() 생성자","desc":"클래스에서 인스턴스를 생성할 때 자동으로 호출되는 메서드. self는 인스턴스 자신을 가리키며, self.속성명으로 인스턴스 변수를 정의."},{"term":"Class 변수 vs Instance 변수","desc":"Class 변수: 모든 Instance가 공유하는 변수, Class명으로 접근.\nInstance 변수: 각 객체마다 독립적으로 존재, self.(변수명)으로 정의."},{"term":"상속(Inheritance)","desc":"기존 Class(부모)를 확장해 새로운 Class(자식) 정의. 코드 재사용성 향상.\nclass Dog(Animal): ← Animal을 상속받는 Dog"},{"term":"오버라이딩 & super()","desc":"오버라이딩: Parent Method를 Child가 재정의. Parent의 기능을 그대로 가져오되 변경 가능.\nsuper(): 직전 Method의 기능 불러오기, Parent Method 호출 → 기능 확장"}],"quiz":[{"q":"class Dog(Animal): 에서 괄호 안 Animal의 역할은?","options":["Dog 클래스의 인스턴스 이름","상속받을 부모 클래스","Dog의 메서드 이름","모듈 이름"],"answer":1,"exp":"class 자식클래스(부모클래스): 형태로 상속을 구현합니다. Dog는 Animal의 모든 속성과 메서드를 물려받습니다."},{"q":"__init__ 메서드는 언제 자동 호출되는가?","options":["클래스를 import할 때","인스턴스를 생성할 때","메서드를 호출할 때","프로그램이 종료될 때"],"answer":1,"exp":"__init__은 생성자로, p = Person('철수') 처럼 인스턴스를 만들 때 자동으로 호출됩니다."},{"q":"self.count = 0 과 Counter.total = 0 의 차이는?","options":["둘 다 인스턴스 변수다","self는 인스턴스 변수, Counter는 클래스 변수다","둘 다 클래스 변수다","차이가 없다"],"answer":1,"exp":"self.count는 각 인스턴스마다 독립적인 인스턴스 변수, Counter.total은 모든 인스턴스가 공유하는 클래스 변수입니다."}],"codeExample":"class Animal:\n    def __init__(self, name):\n        self.name = name   # 인스턴스 변수\n\n    def eat(self):\n        return f\"{self.name}가 먹고 있습니다.\"\n\n# 상속\nclass Dog(Animal):\n    def bark(self):\n        return f\"{self.name}: 멍멍!\"\n    ","keypoints":["클래스 = 데이터(속성) + 기능(메서드)을 묶은 설계도, 인스턴스를 생성해 활용","__init__() = 인스턴스 생성 시 자동 호출되는 생성자, self = 인스턴스 자신","클래스 변수 = 모든 인스턴스 공유 / 인스턴스 변수(self.) = 각 객체 독립","상속: class 자식(부모): 형태 — 부모의 속성·메서드를 모두 물려받음","super() = 부모 메서드 호출 / 오버라이딩 = 부모 메서드를 자식이 재정의"]},{"id":"ch6","chapter":"1","book":"2","title":"NumPy와 행렬","emoji":"🔢","concepts":[{"term":"NumPy란?","desc":"Python의 대표적인 수치연산 라이브러리. Python의 기본 기능으로 연산 시 속도가 느리나, NumPy는 C 언어로 구현된 함수를 통해 벡터·행렬·텐서 연산을 빠르게 수행. LLM, AI 분야에서 필수적이며 거의 모든 ML/DL 라이브러리는 NumPy 사용."},{"term":"배열 초기화 함수","desc":"np.array([리스트]): 직접 배열 만들기\nnp.zeros((m,n)): m×n 영(0)행렬\nnp.ones((m,n)): m×n 일(1)행렬\nnp.arange(start, stop, step): 범위 배열\nnp.random.randn(m,n): 정규분포 난수 배열"},{"term":"벡터 연산","desc":"요소별(Elementwise) 연산: +, -, *, /\n내적(Dot Product): 벡터의 방향 유사도 측정에 활용 — np.dot(v1, v2)\n노름(Norm): 벡터 크기 계산(거리 개념) — np.linalg.norm(v1)"},{"term":"NumPy 행렬 연산","desc":"2차원 배열(행렬, Matrix)은 데이터·가중치를 표현하는 가장 일반적인 형식.\n행렬 곱: np.matmul(A, B) 또는 A @ B\n전치 행렬(Transpose): A.T"}],"quiz":[{"q":"NumPy가 Python 기본 연산보다 빠른 이유는?","options":["Python 3.x 버전에서만 작동하기 때문","C 언어로 구현된 함수를 통해 연산하기 때문","GPU를 자동으로 활용하기 때문","메모리를 더 많이 사용하기 때문"],"answer":1,"exp":"NumPy는 C 언어로 구현된 함수를 통해 벡터·행렬·텐서 연산을 빠르게 수행합니다."},{"q":"m×n 크기의 모든 값이 0인 행렬을 만드는 함수는?","options":["np.array((m,n))","np.zeros((m,n))","np.empty((m,n))","np.null((m,n))"],"answer":1,"exp":"np.zeros((m,n))은 m×n 크기의 영(0)행렬을 생성합니다."},{"q":"두 벡터의 내적(Dot Product)을 계산하는 NumPy 함수는?","options":["np.cross(v1, v2)","np.dot(v1, v2)","np.mul(v1, v2)","np.inner(v1, v2)"],"answer":1,"exp":"np.dot(v1, v2)로 내적을 계산합니다. 내적은 벡터의 방향 유사도 측정에 활용됩니다."},{"q":"행렬 A의 전치 행렬을 구하는 방법은?","options":["np.transpose_of(A)","A.T","A.flip()","np.inv(A)"],"answer":1,"exp":"A.T로 전치 행렬을 구합니다. 행과 열이 뒤바뀐 행렬입니다."}],"keypoints":["NumPy = C 언어 기반 수치연산 라이브러리 → Python보다 빠른 벡터·행렬 연산","np.zeros((m,n)): 영행렬 / np.ones((m,n)): 일행렬 / np.arange(): 범위 배열","내적(Dot Product): np.dot(v1, v2) — 벡터 방향 유사도 측정에 활용","노름(Norm): np.linalg.norm(v) — 벡터 크기(거리 개념)","행렬 곱: A @ B 또는 np.matmul(A, B) / 전치 행렬: A.T"]},{"id":"ch7","chapter":"2","book":"2","title":"Pandas 데이터 처리","emoji":"🐼","concepts":[{"term":"Pandas란?","desc":"데이터 분석을 위한 파이썬 핵심 라이브러리. 정형 데이터 처리에 많이 활용. NumPy(연산)와 함께 테이블 형태 데이터 처리에 특화. 다양한 데이터의 분석과 전처리에 유용."},{"term":"Series / DataFrame","desc":"Series(1차원): 인덱스가 있는 1차원 배열.\nDataFrame(2차원): Series의 결합 형태. 행·열로 구성된 테이블 구조.\ndf.shape: 크기(행, 열) 확인 / df.columns: 컬럼 이름 확인\ndf.info(): 구조 요약 / df.describe(): 기본 통계 분석"},{"term":"데이터 로드 & 저장","desc":"Pandas는 CSV, JSON, XLS 파일 불러오기에 특화.\n파일 로드: pd.read_csv(), pd.read_json()\n파일 저장: df.to_csv(), df.to_json()\n데이터 확인: df.head(), df.tail()"},{"term":"데이터 선택과 필터링","desc":"조건식 기반 필터링 가장 많이 사용:\ndf[(df['age'] >= 20) & (df['gender'] == 'male')]\n& : AND 조건(20대 이상 + 남성)\n| : OR 조건(20대 이상 또는 남성)"},{"term":"데이터 변환과 파생 변수","desc":"파생 변수: dict와 유사한 방식으로 추가. 데이터 값 변환, 함수 적용, 새로운 컬럼 생성 가능.\ndf['level'] = df['age'].apply(lambda x: '성인' if x >= 20 else '미성년')\ndf['has_python'] = df['skills'].str.contains('Python')"},{"term":"고급 데이터 처리","desc":"groupby: 특정 기준으로 묶어서 통계 계산\nagg: 여러 연산을 한 번에 수행\n텍스트 데이터: .str.len(), .str.split().str.len()\n시계열 데이터: pd.to_datetime(), .dt.year, .dt.month\nmerge(): SQL JOIN과 유사 / pivot_table(): 행·열 기준 데이터 요약"}],"quiz":[{"q":"DataFrame의 크기(행, 열)를 확인하는 속성은?","options":["df.size","df.shape","df.length","df.count()"],"answer":1,"exp":"df.shape는 (행 수, 열 수) 형태의 튜플을 반환합니다."},{"q":"CSV 파일을 DataFrame으로 불러오는 함수는?","options":["pd.load_csv()","pd.open_csv()","pd.read_csv()","pd.import_csv()"],"answer":2,"exp":"pd.read_csv('파일명.csv')로 CSV 파일을 DataFrame으로 불러옵니다."},{"q":"df[(df['age'] >= 20) & (df['gender'] == 'male')] 에서 &의 의미는?","options":["OR 조건","AND 조건","NOT 조건","XOR 조건"],"answer":1,"exp":"& 는 AND 조건입니다. 두 조건을 모두 만족하는 행만 필터링합니다. |는 OR 조건입니다."},{"q":"특정 기준으로 묶어서 통계를 계산하는 메서드는?","options":["df.sort()","df.groupby()","df.merge()","df.pivot()"],"answer":1,"exp":"groupby()로 특정 컬럼 기준으로 데이터를 묶은 후 mean(), sum() 등 통계를 계산합니다."}],"keypoints":["DataFrame = 행·열로 구성된 2차원 테이블 / Series = 1차원 배열","df.shape(크기), df.columns(컬럼명), df.info()(구조), df.describe()(통계)","파일 로드: pd.read_csv() / 저장: df.to_csv() / 확인: df.head(), df.tail()","조건 필터링: df[조건] — & (AND), | (OR) 사용, 괄호 필수","groupby(기준).agg() = 그룹별 여러 통계 한번에 / merge() = SQL JOIN과 유사"]},{"id":"ch8","chapter":"3","book":"2","title":"텍스트 전처리 핵심 기법","emoji":"✂️","concepts":[{"term":"텍스트 전처리가 필요한 이유","desc":"LLM과 같은 모델을 사용하지 않는 데이터 분석에서는 불필요한 문자/잡음에 취약. 분석 모델에 전달 전 정리 및 표준화 필요.\n주요 단계: 정규표현식 → 정제(Cleaning) → 토큰화(Tokenization) → 정규화(Normalization) → 불용어 제거(Stopwords)"},{"term":"정규표현식(Regex)","desc":"패턴 기반 검색/치환. 이메일, 날짜, 숫자 등 추출 가능.\n\\d+: 숫자 / [가-힣]+: 한글 / [a-zA-Z]+: 영문\n\\s+: 공백 문자 / \\b: 단어 경계 / .: 모든 문자(줄바꿈 제외)"},{"term":"텍스트 정제(Cleaning)","desc":"HTML 태그, URL, 이모지 제거 / 특수문자 → 공백 치환 / 공백 정리\nre.sub(r'<[^>]+>', '', text)  # HTML 태그 제거\nre.sub(r'http\\S+', '', text)   # URL 제거\ntext.strip()                    # 앞뒤 공백 제거"},{"term":"토큰화(Tokenization) & N-gram","desc":"의미 있는 단위로 분리: 문장 단위, 단어 단위, 형태소 단위\nLLM에서는 별도의 토크나이저(Tokenizer) 사용\nN-gram: 연속된 n개의 단어 묶음 → 문맥 반영\nbigrams = [' '.join(words[i:i+2]) for i in range(len(words)-1)]"},{"term":"정규화(Normalization)","desc":"텍스트를 표준 형태로 변환.\n대소문자 통일 / 숫자 → NUM 치환 / 반복 문자 축소 / 불필요한 공백 제거\n예: '와아아아아 대박!!!! 2025년' → '와아 대박!! NUM년'"},{"term":"불용어(Stopwords) 처리","desc":"불필요 단어 제거. 의미 없는 조사, 접속사 등 (예: '이', '있', '것', '그리고')\nstopwords = ['이', '있', '것', '그리고']\nfiltered = [w for w in text.split() if w not in stopwords]\n전처리 후 단어 수 감소, 품질 개선"}],"quiz":[{"q":"정규표현식에서 숫자를 매칭하는 패턴은?","options":["[a-z]+","\\d+","[가-힣]+","\\s+"],"answer":1,"exp":"\\d+는 하나 이상의 숫자(digit)를 매칭합니다. \\d는 0-9, +는 1번 이상을 의미합니다."},{"q":"HTML 태그를 제거하기 위한 정규식 패턴으로 올바른 것은?","options":["r'<.*>'","r'<[^>]+>'","r'<html>'","r'\\[.*\\]'"],"answer":1,"exp":"r'<[^>]+>'는 < 로 시작하고 > 가 아닌 문자들을 포함한 후 > 로 끝나는 HTML 태그를 매칭합니다."},{"q":"N-gram에서 Bigram이란?","options":["단어 하나씩 분리","연속된 2개 단어 묶음","문장 단위 분리","형태소 단위 분리"],"answer":1,"exp":"Bigram은 연속된 2개(bi=2) 단어의 묶음입니다. 문맥 정보를 반영할 수 있어 단순 토큰화보다 풍부한 표현이 가능합니다."},{"q":"불용어(Stopwords) 처리의 목적은?","options":["텍스트 길이 늘리기","의미 없는 단어 제거로 품질 개선","숫자를 텍스트로 변환","대소문자 통일"],"answer":1,"exp":"불용어 처리는 '이', '있', '그리고' 같은 의미 없는 조사·접속사를 제거해 분석 품질을 높입니다."}],"keypoints":["전처리 순서: 정규표현식 → 정제(Cleaning) → 토큰화 → 정규화 → 불용어 제거","Regex 패턴: \\d+(숫자), [가-힣]+(한글), [a-zA-Z]+(영문), \\s+(공백)","텍스트 정제 = HTML 태그·URL·이모지 제거, 특수문자 → 공백, strip()으로 정리","N-gram = 연속된 n개 단어 묶음 (Bigram=2개) → 문맥 정보 반영","불용어(Stopwords) = 의미 없는 조사·접속사 제거 → 분석 품질 개선"]},{"id":"ch9","chapter":"4","book":"2","title":"텍스트 데이터 변환과 통계 분석","emoji":"📊","concepts":[{"term":"텍스트 수치화의 필요성","desc":"텍스트 ≠ 숫자. 기계학습·통계분석 모델은 수치 데이터를 입력으로 받음. 텍스트를 수치화해야 모델에 적용 가능.\n주요 기법: Bag of Words(BOW), TF-IDF, N-gram"},{"term":"Bag of Words (BOW)","desc":"단어의 출현 횟수를 벡터로 표현하는 알고리즘. 문장 내에 어떤 단어가 몇 번 출현하는지를 벡터로 표현. 순서 정보는 무시됨.\n장점: 구조가 단순해서 계산이 빠름\n단점: 순서를 무시하기 때문에 복잡한 맥락에서 내용들을 이해하기 어려움. 희소(sparse)한 벡터 생성으로 메모리 낭비"},{"term":"TF-IDF","desc":"TF(Term Frequency): 문서 내 단어 비율\nIDF(Inverse Document Frequency): 각 단어의 중요도에 대한 로그값 = log(전체 문서 수 / 해당 단어가 포함된 문서 수)\nTF-IDF = TF × IDF → 희귀한 단어일수록 중요성 ↑\n텍스트 데이터를 Bag of Words 방식을 통해 단어 벡터 위치로 Indexing → 문장 간 비교 가능"},{"term":"문서 유사도","desc":"Cosine Similarity: 두 문서 벡터가 얼마나 비슷한 방향인지 측정\ncos(θ) = A·B / (||A|| × ||B||) — 값 범위: -1(반대) ~ 1(동일)\nEuclidean Distance: 두 벡터의 직선 거리. d = √Σ(Ai - Bi)² — 값 범위: 0 ~ ∞\n임베딩 방식과 유사함. 검색 시스템, 추천 시스템, RAG에 활용"},{"term":"텍스트 데이터 분포 시각화","desc":"단어 빈도 분포: 상위 n개 단어 막대그래프 — word_freq.most_common(5)\n문서 길이 분포: 히스토그램 / 박스플롯\n문서 유사도 히트맵: TF-IDF 기반 Cosine 유사도 행렬 시각화"}],"quiz":[{"q":"Bag of Words의 단점으로 올바른 것은?","options":["계산이 너무 느리다","순서 정보를 무시해 문맥 파악이 어렵다","설치가 복잡하다","영어만 지원한다"],"answer":1,"exp":"BOW는 단어의 순서를 무시하기 때문에 복잡한 맥락을 이해하기 어렵고, 희소 벡터로 인한 메모리 낭비가 생깁니다."},{"q":"TF-IDF에서 IDF 값이 높다는 것은?","options":["자주 등장하는 흔한 단어","여러 문서에 골고루 등장하는 단어","특정 문서에만 등장하는 희귀한 단어","불용어일 가능성이 높은 단어"],"answer":2,"exp":"IDF = log(전체 문서 수 / 해당 단어 포함 문서 수)이므로, 적은 문서에만 등장할수록(희귀할수록) IDF 값이 높아집니다."},{"q":"Cosine Similarity의 값 범위는?","options":["0 ~ 1","-1 ~ 1","0 ~ 100","-∞ ~ ∞"],"answer":1,"exp":"Cosine Similarity는 -1(완전 반대 방향)부터 1(완전 동일 방향)까지의 값을 가집니다. 1에 가까울수록 유사도가 높습니다."},{"q":"문서 유사도가 활용되는 분야로 올바르지 않은 것은?","options":["검색 시스템","추천 시스템","RAG(검색 증강 생성)","이미지 압축"],"answer":3,"exp":"문서 유사도는 텍스트 기반의 검색, 추천, RAG에 활용됩니다. 이미지 압축은 텍스트 유사도와 무관합니다."}],"keypoints":["BOW(Bag of Words) = 단어 출현 횟수를 벡터로 표현, 순서 무시 → 희소 행렬","BOW 장점: 구조 단순, 계산 빠름 / 단점: 순서 무시, 희소 벡터로 메모리 낭비","TF-IDF = TF(문서 내 단어 비율) × IDF(희귀할수록 높은 값) → 중요 단어 강조","Cosine Similarity = 두 벡터 방향 유사도 (-1 ~ 1) / Euclidean Distance = 직선 거리 (0 ~ ∞)","문서 유사도 활용: 검색 시스템, 추천 시스템, RAG(검색 증강 생성)"]},{"id":"ch10","chapter":"1","book":"3","title":"자연어 처리와 임베딩","emoji":"🗣️","concepts":[{"term":"LLM이 언어를 배우는 방법","desc":"LLM(대규모 언어 모델)은 방대한 텍스트 데이터(예: Qwen 3 → 약 37TB 텍스트) 속 언어 패턴을 학습해 인간처럼 자연스러운 언어를 생성.\n단순 선형 모델(a, b 파라미터)과 달리 LLM 파라미터는 수억~수천억 개에 달해 언어 데이터의 다양성과 복잡성을 반영."},{"term":"자연어 학습의 어려움","desc":"자연어 데이터는 픽셀 값·수치형 데이터와 달리 숫자 연산이 불가능하므로 숫자(벡터)로 변환 필요.\n또한 문장 길이가 일정하지 않아 모델 설계 전 사전 세팅 과정이 필수.\n예: '나는 B를 좋아한다' ≠ 'B는 나를 좋아한다' — 순서에 따라 의미가 달라짐"},{"term":"임베딩(Embedding)이란?","desc":"추상적인 데이터(언어, 그래프, 그림, 사운드 등)를 컴퓨터가 이해할 수 있도록 벡터(숫자 목록)로 변환하는 과정.\nWord Embedding: 단어를 수백~수천 차원의 벡터로 변환\n→ 유사한 단어는 벡터 공간에서 가깝게 배치됨\n예: '왕' - '남자' + '여자' ≈ '여왕'"},{"term":"토크나이저(Tokenizer)","desc":"텍스트를 모델이 처리할 수 있는 '토큰' 단위로 쪼개는 도구.\nLLM에서는 서브워드(subword) 단위로 분리하는 별도 토크나이저 사용.\n예: 'unhappiness' → 'un', 'happi', 'ness'\n→ 어휘 수를 줄이면서도 미지의 단어를 처리 가능"}],"keypoints":["LLM 파라미터 수 = 수억~수천억 개 (단순 모델과의 차이)","자연어는 직접 연산 불가 → 숫자(벡터)로 변환 필수","임베딩 = 추상 데이터 → 벡터 변환 과정","유사 단어는 벡터 공간에서 가까이 배치됨","LLM은 단어 단위가 아닌 서브워드 단위 토크나이저 사용"],"quiz":[{"q":"LLM의 파라미터 수는 단순 선형 모델에 비해 어느 정도인가?","options":["비슷한 수준이다","약 10배 많다","수억~수천억 배 많다","오히려 적다"],"answer":2,"exp":"단순 선형 모델이 a, b 2개 파라미터를 갖는 반면, LLM은 수억~수천억 개의 파라미터를 가져 언어의 복잡성과 다양성을 반영합니다."},{"q":"임베딩(Embedding)의 핵심 목적은?","options":["텍스트를 압축하는 것","추상 데이터를 컴퓨터가 연산할 수 있는 벡터로 변환하는 것","문장의 문법 오류를 수정하는 것","단어를 번역하는 것"],"answer":1,"exp":"임베딩은 언어, 그래프, 이미지, 사운드 같은 추상 데이터를 컴퓨터가 연산할 수 있는 숫자 벡터로 변환하는 과정입니다."},{"q":"LLM의 토크나이저가 서브워드 단위를 사용하는 이유는?","options":["처리 속도가 빠르기 때문","어휘 수를 줄이면서도 미지의 단어를 처리할 수 있기 때문","메모리를 절약하기 때문","번역 정확도가 높기 때문"],"answer":1,"exp":"서브워드 단위 토크나이저는 단어를 더 작은 조각으로 나눠 학습 어휘 수를 줄이고, 처음 보는 단어도 조각 조합으로 처리할 수 있습니다."}]},{"id":"ch11","chapter":"2","book":"3","title":"Transformer와 LLM의 탄생","emoji":"⚡","concepts":[{"term":"Transformer의 핵심: Attention","desc":"2017년 논문 'Attention is All You Need'로 등장. 이전 RNN/LSTM은 순서대로 처리해 느리고 긴 문장에서 앞 내용을 잊는 문제가 있었음.\nAttention: 문장 내 모든 단어가 서로를 동시에 참조해 중요도(가중치)를 계산 → 병렬 처리 가능, 긴 문맥도 잘 처리"},{"term":"Positional Encoding (위치 인코딩)","desc":"Transformer는 단어를 한꺼번에 처리하므로 순서 정보가 없어짐. 그대로 처리하면 토큰들의 묶음처럼 처리됨.\nPositional Encoding: Encoder/Decoder 모델에 입력되기 전 단어 순서 정보를 별도로 삽입.\n예: '나는 학교에 간다' → 각 단어에 위치 번호(0, 1, 2...)가 추가됨"},{"term":"Encoder와 Decoder","desc":"Encoder: 입력 문장을 이해해 의미 벡터로 변환. 6개 층을 쌓아 깊은 맥락이 반영된 벡터 생성.\nDecoder: Encoder의 의미 벡터를 받아 출력 문장을 생성. 이미 생성한 단어를 참조하며 다음 단어 예측.\nGPT: Decoder 구조만 활용 — 텍스트 생성에 최적화\nBERT: Encoder 구조만 활용 — 문장 이해/분류에 최적화"},{"term":"Transformer 성공의 이유","desc":"① 병렬 처리 가능 → GPU 학습에 최적\n② 긴 문맥도 Attention으로 처리 가능\n③ 스케일링 법칙: 파라미터 수, 데이터, 컴퓨팅을 늘리면 성능이 지속 향상\nGPT 구조(Decoder만 활용)가 텍스트 생성 분야에서 특히 성공"}],"keypoints":["Attention = 모든 단어가 서로를 동시 참조 → 병렬처리 가능","Positional Encoding = 순서 정보 별도 삽입","Encoder: 문장 이해 → BERT / Decoder: 텍스트 생성 → GPT","Transformer 성공 = 병렬처리 + 긴 문맥 + 스케일링 법칙","GPT는 Decoder 구조만 사용 (텍스트 생성 특화)"],"quiz":[{"q":"Attention 메커니즘이 RNN 대비 가진 가장 큰 장점은?","options":["파라미터 수가 적다","모든 단어를 동시에 참조해 병렬 처리가 가능하다","학습 데이터가 적게 필요하다","번역만 잘한다"],"answer":1,"exp":"RNN은 순서대로 처리해 느리고 긴 문장에서 앞 내용을 잊지만, Attention은 모든 단어가 서로를 동시에 참조하여 병렬 처리가 가능하고 긴 문맥도 잘 처리합니다."},{"q":"GPT와 BERT의 구조적 차이는?","options":["GPT는 Encoder, BERT는 Decoder 사용","GPT는 Decoder, BERT는 Encoder 사용","둘 다 Encoder-Decoder 전체 사용","GPT는 RNN, BERT는 Transformer 사용"],"answer":1,"exp":"GPT는 Decoder 구조만 사용해 텍스트 생성에 최적화되고, BERT는 Encoder 구조만 사용해 문장 이해·분류에 최적화됩니다."},{"q":"스케일링 법칙(Scaling Law)이란?","options":["모델이 작을수록 성능이 좋다는 법칙","파라미터, 데이터, 컴퓨팅을 늘릴수록 성능이 지속 향상된다는 법칙","특정 크기 이상이면 성능이 떨어진다는 법칙","데이터 품질이 양보다 중요하다는 법칙"],"answer":1,"exp":"스케일링 법칙은 파라미터 수, 학습 데이터, 컴퓨팅 자원을 늘릴수록 모델 성능이 지속적으로 향상된다는 실험적 발견입니다."}]},{"id":"ch12","chapter":"3","book":"3","title":"LLM의 발전 과정","emoji":"📈","concepts":[{"term":"BERT와 GPT: 사전 학습 모델의 등장","desc":"2018~2019년 Transformer 기반 '사전 학습(Pre-training)' 모델 등장.\n목표: 특정 Task가 아닌 언어 패턴 자체를 학습 → 약간의 추가 학습만으로 단일 Task 모델처럼 뛰어난 성능.\nBERT(Google): Encoder 기반, 문장 이해·분류 특화\nGPT(OpenAI): Decoder 기반, 텍스트 생성 특화"},{"term":"GPT-3와 한계","desc":"GPT-3: 175B(1,750억) 파라미터.\n한계: 질의응답 능력 부족 — 예: '오늘이 무슨 요일입니까?' 입력 시 질문을 이어 써야 하는지, 답을 해야 하는지 혼동하여 일관된 답변을 하지 못함\n→ 지시를 따르는 능력(Instruction Following) 부재"},{"term":"GPT-3.5와 RLHF","desc":"GPT-3.5: 175B 파라미터 + SFT + RLHF 적용\nSFT(Supervised Fine-Tuning): 정답 예시를 보여주며 지시 따르기 학습\nRLHF(인간 피드백 강화학습): 여러 답변 중 인간이 좋은 답변을 선택·순위 매김 → 보상 모델 학습 → LLM 개선\n→ ChatGPT 서비스의 기반이 됨"},{"term":"GPT-4와 이후의 발전","desc":"GPT-4: 멀티모달(텍스트+이미지 입력) 지원, 더 긴 컨텍스트 윈도우\n현재 트렌드:\n· Decoder 기반 모델이 분류 Task도 잘 수행 (충분한 파라미터+데이터 시)\n· Encoder 모델 사용 방식의 한계로 Decoder 기반 모델이 주류\n· 오픈소스 모델 vs 상용 모델 경쟁 활발"}],"keypoints":["BERT/GPT = 사전 학습 모델 (언어 패턴 자체를 학습)","GPT-3: 175B 파라미터, 지시 따르기 능력 부재","RLHF = 인간 피드백으로 '좋은 답변' 선택 → 보상 모델 → LLM 개선","GPT-3.5 = GPT-3 + SFT + RLHF → ChatGPT의 기반","현재: Decoder 기반 모델이 분류 포함 대부분 Task 수행 가능"],"quiz":[{"q":"GPT-3의 가장 큰 한계는 무엇이었나?","options":["파라미터 수가 너무 적었다","지시를 따르는 능력(Instruction Following)이 부족했다","영어만 지원했다","인터넷 검색이 불가했다"],"answer":1,"exp":"GPT-3는 175B 파라미터의 방대한 모델이었지만, 질문인지 답변인지 혼동하는 등 지시를 따르는 능력이 부족했습니다."},{"q":"RLHF(인간 피드백 강화학습)의 핵심 과정 순서는?","options":["LLM 학습 → 인간 평가 → 배포","여러 답변 생성 → 인간이 순위 매김 → 보상 모델 학습 → LLM 개선","데이터 수집 → 전처리 → 학습","사전 학습 → 파인튜닝 → 평가"],"answer":1,"exp":"RLHF는 ① 여러 답변 생성 → ② 인간이 좋은 답변 순위 매김 → ③ 보상 모델 학습 → ④ 강화학습으로 LLM 개선 순으로 진행됩니다."},{"q":"GPT-3.5(ChatGPT)가 GPT-3보다 나아진 핵심 이유는?","options":["파라미터 수가 더 많아서","SFT + RLHF로 지시 따르기 능력을 추가했기 때문","더 빠른 GPU를 사용해서","더 많은 언어를 지원해서"],"answer":1,"exp":"GPT-3.5는 GPT-3와 같은 175B 파라미터이지만 SFT + RLHF를 추가 적용해 대화 능력이 크게 향상되었습니다."}]},{"id":"ch13","chapter":"4","book":"3","title":"LLM 생태계와 주요 모델들 (1)","emoji":"🌐","concepts":[{"term":"상용 모델 vs 오픈 모델","desc":"상용 모델: OpenAI(GPT), Google(Gemini), Anthropic(Claude) — API로만 접근 가능\n오픈 모델: Meta(LLaMA), Mistral, Google(Gemma), Alibaba(Qwen) 등 — 모델 가중치 공개\n오픈 모델 크기: 초소형 200MB급(Gemma) ~ 초대형 1000B급(Moonshot AI Kimi K2)까지 다양"},{"term":"LLaMA 시리즈 (Meta)","desc":"Meta의 대표 오픈소스 LLM. LLaMA 2 → LLaMA 3 → LLaMA 4로 발전.\n특징: 모델 가중치 공개 → 누구나 다운로드·커스터마이징 가능\nLLaMA 기반으로 수많은 파생 모델 등장 (Alpaca, Vicuna 등)\n상용 GPT-4에 근접하는 성능을 오픈소스로 달성"},{"term":"Mistral 시리즈","desc":"프랑스 스타트업 Mistral AI의 모델. 역사적으로 의미 있는 모델 다수 제작.\n· 칩인형 모델: 출시 당시 동일 사이즈 대비 성능 ↑, 2배 큰 라마2도 이김\n· 슬라이딩 윈도우 어텐션: 전체 문맥 X → 주변 문맥 집중 활용 → 메모리 효율 개선"},{"term":"파라미터 수와 VRAM의 관계","desc":"파라미터 수 = 모델의 '지식 용량'. 많을수록 성능 ↑, 필요 메모리(VRAM) ↑\n정밀도(bit)와 VRAM:\n· 32bit: 정밀도·해상도 높음, 메모리 많이 필요\n· 16bit: 정밀도·해상도 낮음, 메모리 절약\n예: 7B 모델 → 32bit: ~28GB, 16bit: ~14GB VRAM 필요\n양자화(Quantization): 정밀도를 낮춰 모델 크기를 줄이는 기법"}],"keypoints":["상용 모델(GPT, Claude, Gemini) vs 오픈 모델(LLaMA, Mistral, Qwen)","LLaMA = Meta 오픈소스 모델, 수많은 파생 모델의 기반","Mistral = 동급 대비 효율 높은 프랑스 스타트업 모델","파라미터 수 ↑ = 성능 ↑ = 필요 VRAM ↑","32bit(고정밀/고용량) vs 16bit(저정밀/저용량)"],"quiz":[{"q":"오픈소스 LLM과 상용 모델의 가장 큰 차이는?","options":["성능 차이","모델 가중치를 공개해 누구나 다운로드·수정 가능 여부","가격 차이","지원 언어 수 차이"],"answer":1,"exp":"오픈 모델은 모델 가중치를 공개해 누구나 다운로드하고 커스터마이징할 수 있는 반면, 상용 모델은 API를 통해서만 접근 가능합니다."},{"q":"같은 파라미터 수의 모델에서 16bit 대신 32bit를 사용하면?","options":["VRAM이 절약된다","VRAM이 더 많이 필요하지만 정밀도가 높아진다","속도가 빨라진다","성능이 낮아진다"],"answer":1,"exp":"32bit는 더 높은 정밀도를 제공하지만 같은 파라미터 수에서 16bit보다 약 2배 많은 VRAM이 필요합니다."},{"q":"Mistral의 슬라이딩 윈도우 어텐션의 특징은?","options":["전체 문맥을 균등하게 처리한다","주변 문맥에 집중해 전체 문맥 대신 효율적으로 처리한다","이미지도 함께 처리한다","코드 생성에 특화되어 있다"],"answer":1,"exp":"슬라이딩 윈도우 어텐션은 전체 문맥 대신 주변 문맥에 집중해 처리함으로써 메모리 효율을 높입니다."}]},{"id":"ch14","chapter":"5","book":"3","title":"LLM 생태계와 주요 모델들 (2)","emoji":"🔭","concepts":[{"term":"Gemma (Google) / Qwen (Alibaba)","desc":"Gemma: Google의 오픈소스 경량 모델. 200MB급 초소형부터 다양한 사이즈. Gemma 3n은 스마트폰에서 실행 가능.\nQwen 3 (Alibaba): 약 37TB 텍스트(실제 용량 ~100TB)로 학습. 0.5B~235B 다양한 사이즈. 중국어·영어 다국어 강점."},{"term":"DeepSeek (중국)","desc":"중국 스타트업의 고성능 오픈소스 모델. DeepSeek R1이 큰 화제.\nAIME 2024 수학 벤치마크에서 GPT-4o, Claude 3.5 Sonnet 등 상용 모델 대비 우수한 성능 달성.\n→ 오픈소스로 상용 모델 수준의 추론 능력 달성"},{"term":"sLLM (small Large Language Model)","desc":"DeepSeek R1의 연구로 부각된 개념: 대형 모델의 지식을 작은 모델에 전달하는 증류(Distillation) 기법.\n→ 작은 모델도 대형 모델의 추론 능력을 상당 부분 흡수 가능\n예: DeepSeek-R1-Distill-Llama-8B: AIME 2024에서 cons@64 80점\n스마트폰·엣지 디바이스에서도 강력한 AI 구현 가능성 시사"}],"keypoints":["Gemma = Google 경량 오픈소스 (스마트폰 실행 가능한 초소형 버전 존재)","Qwen 3 = Alibaba, 약 37TB 학습, 다국어 강점","DeepSeek R1 = 오픈소스로 상용 모델 수준의 추론 능력 달성","sLLM = 작은 모델에 대형 모델 지식 전달 (증류, Distillation)","AIME 2024: DeepSeek 소형 증류 모델이 GPT-4o 등 추월"],"quiz":[{"q":"DeepSeek R1이 LLM 생태계에 준 충격은?","options":["최초로 한국어를 지원한 모델이기 때문","오픈소스 모델이 상용 모델 수준의 추론 능력을 달성했기 때문","가장 큰 파라미터 수를 기록했기 때문","이미지 생성이 가능한 최초 오픈소스이기 때문"],"answer":1,"exp":"DeepSeek R1은 오픈소스임에도 AIME 2024 수학 벤치마크에서 GPT-4o, Claude 3.5 Sonnet 등 상용 모델을 앞서는 추론 능력을 보여줬습니다."},{"q":"sLLM(증류 모델)의 핵심 아이디어는?","options":["작은 모델을 처음부터 새로 학습시키는 것","대형 모델의 지식을 작은 모델에 전달(증류)해 효율적인 소형 모델을 만드는 것","모델을 여러 서버에 분산하는 것","사용자 데이터로 개인화하는 것"],"answer":1,"exp":"증류(Distillation)는 대형 모델의 지식과 능력을 작은 모델에 전달하는 기법입니다. 덕분에 작은 모델도 대형 모델에 근접한 추론 능력을 가질 수 있습니다."},{"q":"Qwen 3 모델의 학습 데이터 규모는?","options":["약 1TB","약 37TB 텍스트(실제 용량 ~100TB)","약 1PB","약 100GB"],"answer":1,"exp":"Qwen 3는 약 37TB의 텍스트(실제 저장 용량 ~100TB)로 학습된 Alibaba의 대규모 오픈소스 LLM입니다."}]},{"id":"ch15","chapter":"6","book":"3","title":"추론과 멀티모달 모델","emoji":"🧠","concepts":[{"term":"Reasoning(추론) 모델이란?","desc":"LLM에게 생각할 시간(과 텍스트 공간)을 주면 어려운 문제를 더 잘 풀 수 있다는 개념.\n→ 수학 문제, 코딩 문제 등에서 큰 효과\n대표 모델: OpenAI o1/o3, DeepSeek R1, Gemini Thinking"},{"term":"Thinking 모델과 Over Thinking","desc":"Thinking 모델 작동: 질문 → 답변 후 요구사항에 적절한지 계산 → 적절한 답변으로 수정 (Gemini 방식)\nOver Thinking 문제: Thinking을 너무 많이 하면 오히려 성능이 저하되는 현상\n→ 적절한 추론 깊이 조절이 필요"},{"term":"멀티모달(Multimodal) 모델","desc":"텍스트뿐 아니라 이미지, 오디오, 영상 등 여러 형태의 데이터를 함께 처리하는 모델.\n대표 모델: GPT-4o, Gemini 1.5 Pro, Claude 3\n활용: 이미지 설명, 차트 해석, 문서 OCR, 영상 이해 등\n→ 현재 주요 상용 LLM 대부분이 멀티모달 지원"},{"term":"sLLM과 엣지 AI","desc":"sLLM 트렌드: 경량화된 고성능 모델을 스마트폰·엣지 디바이스에 탑재\n클라우드 없이 디바이스에서 직접 AI 구동 → 프라이버시 보호, 지연 시간 감소\nApple Intelligence, Google AI Edge 등이 이 방향 추구\n증류(Distillation) + 양자화(Quantization)가 핵심 기술"}],"keypoints":["Reasoning 모델 = LLM에게 생각할 시간을 줘서 어려운 문제 해결","Over Thinking = 추론 과도 시 오히려 성능 저하","멀티모달 = 텍스트+이미지+오디오 등 복합 처리","현재 주요 상용 LLM 대부분 멀티모달 지원","sLLM + 엣지 AI = 클라우드 없이 디바이스에서 AI 구동"],"quiz":[{"q":"Reasoning 모델이 수학·코딩 문제에서 성능이 높은 이유는?","options":["더 많은 학습 데이터를 사용해서","LLM에게 생각할 텍스트 공간을 주어 단계별로 문제를 풀 수 있기 때문","전문 수학 데이터만 학습했기 때문","GPU가 더 빨라서"],"answer":1,"exp":"Reasoning 모델은 즉시 답변하지 않고 텍스트 공간에서 단계별로 생각하는 과정을 거쳐 수학·코딩 등 논리적 문제에서 성능이 향상됩니다."},{"q":"Over Thinking 문제란?","options":["모델 크기가 너무 커지는 문제","추론(Thinking)을 과도하게 하면 오히려 성능이 저하되는 현상","사용자가 너무 많은 질문을 하는 것","학습 데이터가 부족한 것"],"answer":1,"exp":"Over Thinking은 Thinking 모델이 필요 이상으로 추론 과정을 길게 가져갈 때 오히려 정답에서 멀어지는 성능 저하 현상입니다."},{"q":"멀티모달 모델의 핵심 특징은?","options":["여러 언어를 동시에 번역할 수 있다","텍스트뿐 아니라 이미지, 오디오, 영상 등 다양한 형태의 데이터를 처리할 수 있다","여러 대의 GPU에서 동시 실행된다","여러 회사의 API를 통합한다"],"answer":1,"exp":"멀티모달 모델은 텍스트 외에도 이미지, 오디오, 영상 등 다양한 형태(모달)의 데이터를 함께 처리할 수 있는 모델입니다."}]},{"id":"ch16","chapter":"7","book":"3","title":"LLM API 소개","emoji":"🔌","concepts":[{"term":"LLM API란?","desc":"직접 모델을 다운로드·실행하지 않고, 인터넷을 통해 LLM 기능을 호출해 사용하는 방식.\n대표 API: OpenAI API, Anthropic API, Google Gemini API\n핵심 구성 요소:\n· model: 사용할 모델 (예: gpt-4o-mini)\n· messages: 대화 내용 (role: system/user/assistant)\n· temperature: 창의성 조절 (0=일관적, 1=창의적)"},{"term":"메시지 구조 (role)","desc":"LLM API는 대화를 role(역할) 기반 메시지 리스트로 주고받음:\n· system: AI의 역할·성격·규칙 설정\n· user: 사용자 입력\n· assistant: AI의 응답 (대화 맥락 유지용)\n멀티턴 대화: 이전 대화 내용 전체를 messages에 포함해 전송"},{"term":"주요 파라미터","desc":"temperature (0~2): 답변의 무작위성 조절\n· 낮음(0~0.3): 일관되고 예측 가능한 답변 → 코드·수학에 적합\n· 높음(0.7~1.5): 창의적이고 다양한 답변 → 창작·브레인스토밍에 적합\nmax_tokens: 최대 출력 토큰 수 제한\ntop_p: 확률 기반 샘플링 조절"},{"term":"LLM 앱 개발 시 고려사항","desc":"비정형 텍스트 데이터에 대한 이해 및 처리 능력 필요\n· 데이터 전처리 필요\n· 문제에 맞는 데이터와 결과 평가 방식 필요\n정량적(수치) 평가 + 정성적(사람이 직접 보는) 평가 방식 모두 고민 필요\n→ LLM 응답의 품질을 어떻게 측정할지가 핵심 과제"}],"keypoints":["LLM API = 인터넷으로 LLM 기능 호출 (직접 실행 불필요)","messages 구조: system(역할 설정) / user(입력) / assistant(응답)","temperature 낮음 → 일관적 / 높음 → 창의적","멀티턴 대화 = 이전 대화 전체를 messages에 포함해 매번 전송","LLM 앱 개발 핵심 = 응답 품질 평가 방식 설계"],"quiz":[{"q":"LLM API에서 'system' role의 역할은?","options":["시스템 오류 처리","AI의 역할·성격·규칙을 설정하는 지침","서버 상태 모니터링","사용자 인증 정보 전달"],"answer":1,"exp":"'system' role은 AI에게 역할과 행동 지침을 설정합니다. 대화 전체에 걸쳐 AI의 성격과 규칙을 정의합니다."},{"q":"temperature 값을 0에 가깝게 설정하면?","options":["더 창의적이고 다양한 답변","더 일관되고 예측 가능한 답변","더 짧은 답변","더 빠른 응답 속도"],"answer":1,"exp":"temperature가 0에 가까울수록 답변이 더 결정적이고 일관됩니다. 코드 생성이나 수학 문제처럼 정확한 답이 필요할 때 낮은 값을 사용합니다."},{"q":"LLM API에서 멀티턴 대화를 구현하는 방법은?","options":["서버에 대화 내용을 저장하고 자동으로 불러옴","이전 대화 내용 전체를 messages 리스트에 포함해서 매번 전송","세션 ID로 자동으로 이전 대화를 연결","별도의 메모리 API를 사용"],"answer":1,"exp":"LLM API는 기본적으로 상태를 저장하지 않습니다. 멀티턴 대화를 위해서는 이전 대화 내용 전체를 messages 배열에 담아 매번 전송해야 합니다."}]},{"id":"ch17","chapter":"8","book":"3","title":"LangChain","emoji":"⛓️","concepts":[{"term":"LangChain이란?","desc":"LLM을 활용한 어플리케이션 개발을 쉽게 만들어주는 Python 프레임워크.\n핵심 기능: 여러 LLM API, 도구, 데이터 소스를 '체인'처럼 연결해 복잡한 워크플로우 구성\n→ RAG(검색 증강 생성), AI 에이전트 등 구현에 많이 활용"},{"term":"LangChain + LLM Provider","desc":"LLM Provider별 별도 라이브러리로 빠른 업데이트:\n· langchain-openai: OpenAI GPT 연결\n· langchain-anthropic: Anthropic Claude 연결\n· langchain-google-genai: Google Gemini 연결\n각 라이브러리를 불러오면 실행 가능 → 모델 교체가 쉬워 여러 LLM을 쉽게 비교·전환 가능"},{"term":"LangChain 주요 컴포넌트","desc":"PromptTemplate: 재사용 가능한 프롬프트 템플릿 관리\nChain: 여러 작업을 순서대로 연결\nMemory: 대화 내용 저장 및 관리 (멀티턴 대화 구현)\nRetriever: 외부 문서에서 관련 내용 검색 (RAG의 핵심)\nAgent: LLM이 스스로 도구를 선택·실행하는 자율 에이전트"},{"term":"RAG (Retrieval Augmented Generation)","desc":"LLM의 한계(최신 정보 없음, 환각 현상)를 보완하는 패턴.\n과정: 질문 → 관련 문서 검색(Retrieval) → 검색된 내용 + 질문을 LLM에 전달 → 답변 생성\n활용: 사내 문서 Q&A, 최신 뉴스 기반 답변, 법률·의료 문서 검색 등\nLangChain이 RAG 구현을 크게 단순화"}],"keypoints":["LangChain = LLM 앱 개발 프레임워크 (여러 LLM·도구를 체인으로 연결)","Provider별 별도 패키지: langchain-openai, langchain-anthropic 등","주요 컴포넌트: PromptTemplate, Chain, Memory, Retriever, Agent","RAG = 외부 문서 검색 + LLM 답변 생성 → 환각·최신정보 문제 해결","LangChain으로 RAG·에이전트 구현을 빠르게 할 수 있음"],"quiz":[{"q":"LangChain의 핵심 목적은?","options":["LLM 모델을 직접 학습시키는 것","여러 LLM, 도구, 데이터 소스를 연결해 LLM 기반 앱 개발을 쉽게 하는 것","모델 성능을 벤치마킹하는 것","LLM을 압축해 경량화하는 것"],"answer":1,"exp":"LangChain은 LLM API, 외부 도구, 데이터 소스 등을 '체인'처럼 연결해 복잡한 LLM 기반 앱(RAG, 에이전트 등)을 쉽게 개발할 수 있게 해주는 프레임워크입니다."},{"q":"RAG(Retrieval Augmented Generation)가 해결하는 LLM의 한계는?","options":["처리 속도 문제","최신 정보 부재와 환각(hallucination) 문제","다국어 지원 부족","이미지 처리 불가"],"answer":1,"exp":"LLM은 학습 데이터 이후의 최신 정보를 모르고 없는 정보를 만들어내는 환각 현상이 있습니다. RAG는 관련 문서를 검색해 LLM에 제공함으로써 이 문제를 크게 완화합니다."},{"q":"LangChain에서 'Memory' 컴포넌트의 역할은?","options":["GPU 메모리를 관리하는 것","대화 내용을 저장하고 관리해 멀티턴 대화를 구현하는 것","모델 파라미터를 저장하는 것","파일 시스템을 관리하는 것"],"answer":1,"exp":"LangChain의 Memory 컴포넌트는 이전 대화 내용을 저장·관리해 멀티턴 대화에서 문맥을 유지할 수 있게 합니다."}]},{"id":"ch18","chapter":"1","book":"4","title":"프롬프트 엔지니어링 기초","emoji":"✍️","concepts":[{"term":"프롬프트 엔지니어링이란?","desc":"LLM에게 원하는 결과를 얻기 위해 입력(프롬프트)을 설계하는 기술.\n최근 변화: 특정 직군의 전문 직무 → 모든 구성원의 역량으로 확대\n고급 프롬프트 구성은 여전히 어려운 영역이며, 프롬프트 품질에 따라 결과 편차가 큼\n최근 모델: LLM의 메타 프롬프팅으로 편차 감소, 하지만 엔지니어 노하우의 영역도 여전히 존재"},{"term":"Context Engineering","desc":"프롬프트 엔지니어링의 확장 개념. 단순 지시문 작성을 넘어 LLM이 활용하는 전체 맥락(Context)을 설계.\nContext 구성 요소 6가지:\n· Instructions/System Prompt: AI 역할·규칙 설정\n· User Prompt: 사용자 입력\n· Retrieved Information (RAG): 검색된 외부 정보\n· State/History (Short-Term Memory): 대화 이력\n· Long-Term Memory: 장기 기억\n· Available Tools: 사용 가능한 도구 목록\n· Structured Output: 출력 형식 지정"},{"term":"효과적인 프롬프트 4요소 (Google Gemini Guide)","desc":"Persona(페르소나): AI에게 부여하는 역할·전문가 정체성\nTask(태스크): 수행할 작업의 명확한 지시\nContext(컨텍스트): 배경 정보, 제약 조건\nFormat(포맷): 원하는 출력 형식 (길이, 구조, 언어 등)\n→ 이 4요소가 Prompt Engineering Frameworks의 기반"},{"term":"Zero-Shot / Few-Shot Prompting","desc":"Zero-Shot: 예시 없이 지시만으로 수행. 최신 모델에서 효과적.\nFew-Shot: 프롬프트 내에 참고할 답변 예시(Shot)를 포함. GPT-3에서 주로 사용.\n· 별도 설명 없이 예시만으로 따라하기 가능\n· 예: 호랑이:Tiger, 사자:Lion, 쌍둥이:Twin → 형식 학습\nRole-Play Prompting: 전문가 역할을 부여해 성능 향상. 전문가 역할이 지식 인출 촉진 + 일관적인 추론 패턴 생성"},{"term":"Prompt Chaining","desc":"복잡한 작업을 여러 단계의 프롬프트로 나눠서 처리하는 방법.\n→ 한 번에 모든 걸 요청하기보다 단계별로 분리해 품질 향상\n예: ① 브레인스토밍 → ② 구조화 → ③ 작성 → ④ 검토\nLangChain의 Chain 기능으로 자동화 가능"},{"term":"LangChain Prompt Templates","desc":"PromptTemplate: Human Message(사용자 입력) 저장·재사용\nChatPromptTemplate: System, Human, AI의 전체 Context 저장\nFewshotPromptTemplate: 예시 데이터가 포함된 Few Shot Prompt 저장\n→ 프롬프트를 코드로 관리하여 일관성 유지 및 재사용 가능"}],"keypoints":["프롬프트 엔지니어링 = LLM에게 원하는 결과를 얻기 위한 입력 설계 기술","Context Engineering = Instructions, User Prompt, RAG, Memory, Tools, Output 6가지 맥락 설계","효과적인 프롬프트 4요소: Persona(역할) + Task(작업) + Context(배경) + Format(형식)","Zero-Shot(예시 없음) vs Few-Shot(예시 포함) — 최신 모델은 Zero-Shot도 강력","Prompt Chaining = 복잡한 작업을 단계별로 나눠 처리 → 품질 향상"],"quiz":[{"q":"Context Engineering에서 RAG가 담당하는 역할은?","options":["AI의 역할과 성격 설정","외부에서 검색한 정보를 컨텍스트에 포함","사용자의 이전 대화 내용 저장","출력 형식 지정"],"answer":1,"exp":"RAG(Retrieved Information)는 외부 문서나 데이터베이스에서 검색한 정보를 LLM의 컨텍스트에 포함시켜, LLM이 모르는 정보에도 답할 수 있게 합니다."},{"q":"Google Gemini Prompting Guide의 효과적인 프롬프트 4요소가 아닌 것은?","options":["Persona(페르소나)","Task(태스크)","Memory(메모리)","Format(포맷)"],"answer":2,"exp":"4요소는 Persona(역할), Task(작업), Context(배경), Format(형식)입니다. Memory는 Context Engineering의 구성 요소이지 4요소에는 포함되지 않습니다."},{"q":"Few-Shot Prompting의 핵심 원리는?","options":["최대한 긴 설명을 제공하는 것","프롬프트 내에 참고할 답변 예시를 포함해 LLM이 형식을 학습하게 하는 것","프롬프트를 최대한 짧게 작성하는 것","전문가 역할만 부여하는 것"],"answer":1,"exp":"Few-Shot은 프롬프트 안에 예시(Shot)를 포함해 별도 설명 없이도 LLM이 원하는 형식과 패턴을 따라하도록 하는 기법입니다."},{"q":"LangChain의 ChatPromptTemplate과 PromptTemplate의 차이는?","options":["둘 다 동일하다","ChatPromptTemplate은 System/Human/AI 전체 컨텍스트를, PromptTemplate은 Human Message만 저장","PromptTemplate이 더 복잡하다","ChatPromptTemplate은 이미지도 처리한다"],"answer":1,"exp":"PromptTemplate은 Human Message(사용자 입력)만 저장하는 반면, ChatPromptTemplate은 System, Human, AI 세 가지 역할의 전체 대화 컨텍스트를 저장합니다."}]},{"id":"ch19","chapter":"2","book":"4","title":"LCEL과 구조화된 출력","emoji":"🔗","concepts":[{"term":"LCEL (LangChain Expression Language)","desc":"LangChain의 파이프라인 구성 문법. | (파이프) 연산자로 여러 컴포넌트를 연결.\n기본 구조: Prompt Template → LLM → (Parser)\n→ 이 전체를 chain = prompt | llm | parser 형태로 함수화 후 실행\nchain.invoke({'변수': '값'}) 형태로 호출"},{"term":"LCEL 2단계: 프롬프트 | LLM | Parser","desc":"1단계: Prompt Template + LLM → 텍스트 출력\n2단계: Parser 추가 → LLM 뒤에 연결하여 출력 형식 변환\nParser 역할: LLM을 이용해 구조화된 출력(JSON, 리스트 등) 생성\n→ Agent, Tool과 함께 사용할 때 특히 유용"},{"term":"구조화된 출력 (Structured Output)","desc":"LLM의 자유 형식 텍스트 출력을 JSON 등 구조화된 형태로 변환.\nwith_structured_output() 메서드 사용\nPydantic 모델이나 TypedDict로 출력 스키마 정의\n→ 후처리 자동화, API 연동, 데이터 파이프라인 구축에 필수"}],"keypoints":["LCEL = | 연산자로 컴포넌트 연결: prompt | llm | parser","chain.invoke() 로 실행, 입력 변수를 딕셔너리로 전달","Parser = LLM 출력을 구조화된 형식으로 변환하는 컴포넌트","구조화된 출력 = with_structured_output() + Pydantic/TypedDict 스키마 정의","LCEL 2단계: 1단계(Prompt+LLM) → 2단계(+Parser 추가해 JSON 등 출력)"],"quiz":[{"q":"LCEL에서 | (파이프) 연산자의 역할은?","options":["OR 조건을 나타낸다","여러 컴포넌트를 순서대로 연결해 파이프라인을 구성한다","두 결과를 병렬로 실행한다","오류를 처리한다"],"answer":1,"exp":"LCEL의 | 연산자는 prompt | llm | parser 처럼 컴포넌트를 순서대로 연결해 파이프라인을 구성합니다. 앞 단계의 출력이 다음 단계의 입력이 됩니다."},{"q":"LCEL에서 Parser의 역할은?","options":["입력 텍스트를 토큰으로 분리","LLM 뒤에 연결되어 출력 형식을 구조화된 형태로 변환","프롬프트 템플릿을 관리","대화 이력을 저장"],"answer":1,"exp":"Parser는 LCEL 파이프라인에서 LLM 뒤에 연결되어, LLM의 자유 형식 텍스트 출력을 JSON 등 구조화된 형태로 변환하는 역할을 합니다."},{"q":"구조화된 출력(Structured Output)이 필요한 주요 이유는?","options":["응답 속도를 높이기 위해","후처리 자동화·API 연동·데이터 파이프라인 구축을 위해","비용을 절감하기 위해","더 긴 답변을 얻기 위해"],"answer":1,"exp":"구조화된 출력은 LLM의 응답을 JSON 등 정형화된 형태로 받아 프로그램에서 자동으로 처리하거나 API와 연동하는 데 필수적입니다."}]},{"id":"ch20","chapter":"3","book":"4","title":"프롬프트 엔지니어링 심화","emoji":"🧪","concepts":[{"term":"Chain-of-Thought (CoT) Prompting","desc":"LLM에게 답 뿐 아니라 '추론 과정'도 출력하도록 유도하는 기법.\nStandard Prompting: Q → A (즉시 답변, 오류 가능)\nCoT Prompting: Q → 단계별 풀이 과정 → A (과정 중시 → 정확도 향상)\n예: 수학 문제에서 23-20=3, 3+6=9 처럼 중간 계산 과정을 포함시키면 최종 정답 정확도 크게 향상"},{"term":"Zero-shot Chain-of-Thought","desc":"예시 없이 '단계별로 생각해보자(Let's think step by step)' 같은 문구만 추가해 추론을 유도.\n추론 금지 시 문제: 풀이 과정을 쓰지 말고 정답만 출력하라고 하면 오답 가능성 급증\n→ 예: 지갑에 2만원, 배달비+팁 지출 후 은행 인출 계산 → 추론 금지 시 오답"},{"term":"프롬프트 길이와 비용·속도 관계","desc":"LLM API는 토큰 수 기준 과금. 프롬프트가 길수록 비용과 처리 시간 증가.\nGPT-5 기준 예시:\n· 입력: $1.25/100만 토큰, 출력: $10.00/100만 토큰\n· GPT-5 mini: 입력 $0.25, 출력 $2.00 (더 저렴)\n· GPT-5 nano: 입력 $0.05, 출력 $0.40 (최저가)\n→ 용도에 맞는 모델 선택과 프롬프트 최적화가 비용 절감의 핵심"},{"term":"Role-Play Prompting 효과","desc":"전문가 역할 부여 시 성능 향상 이유:\n① 전문가 역할에 맞는 방식의 설명 유도\n② 전문가 역할이 지식의 인출 촉진\n③ 일관적인 추론 패턴 생성\n벤치마크(산술·상식·기호 추론)에서 Few-Shot-CoT 대비 유사하거나 우수한 성능"}],"keypoints":["CoT = 답만 요구하지 말고 풀이 과정도 함께 출력하도록 유도 → 정확도 향상","Zero-shot CoT = 예시 없이 '단계별로 생각해보자' 문구만으로 추론 유도","추론 금지 시 복잡한 계산 문제에서 오답률 급증","LLM API 비용 = 토큰 수 기준 과금 (입력+출력 합산), 모델별 가격 차이 큼","Role-Play Prompting = 전문가 역할 부여 → 지식 인출 촉진 + 일관적 추론"],"quiz":[{"q":"Chain-of-Thought(CoT) Prompting이 일반 프롬프팅보다 정확도가 높은 이유는?","options":["더 긴 답변을 생성해서","LLM이 추론 과정을 단계별로 거치면서 중간 오류를 줄일 수 있어서","더 많은 예시를 포함해서","모델이 더 빠르게 답변해서"],"answer":1,"exp":"CoT는 LLM이 최종 답변 전에 단계별 추론 과정을 거치도록 유도합니다. 이 과정에서 논리적 오류를 스스로 수정할 가능성이 높아져 최종 정확도가 향상됩니다."},{"q":"Zero-shot CoT의 핵심 아이디어는?","options":["많은 예시를 제공하는 것","'단계별로 생각해보자' 같은 문구만 추가해 예시 없이도 추론을 유도하는 것","전문가 역할을 부여하는 것","출력 형식을 JSON으로 지정하는 것"],"answer":1,"exp":"Zero-shot CoT는 예시(Shot) 없이도 'Let's think step by step' 같은 간단한 문구만으로 LLM의 추론 과정을 활성화시키는 기법입니다."},{"q":"LLM API 비용 최적화를 위한 핵심 전략은?","options":["항상 가장 큰 모델을 사용한다","용도에 맞는 모델 선택 + 프롬프트 토큰 수 최적화","출력 길이를 무제한으로 설정한다","Few-Shot 예시를 최대한 많이 포함한다"],"answer":1,"exp":"LLM API는 토큰 수 기준으로 과금되므로, 단순 작업에는 저렴한 mini/nano 모델을 사용하고 프롬프트를 간결하게 작성하는 것이 비용 절감의 핵심입니다."}]},{"id":"ch21","chapter":"4","book":"4","title":"LangChain Tools와 Function Calling","emoji":"🛠️","concepts":[{"term":"LLM Tool Calling이란?","desc":"LLM이 스스로 판단해 외부 도구(함수)를 호출하는 기능.\n기존 LLM Workflow: 사용자 입력 → LLM → 텍스트 출력\nTool이 탑재된 LLM: 입력 → LLM이 Tool 필요 여부 판단 → Function Call 실행 → 결과 수신 → 최종 답변\n예: '61번 서버 상태 알려줘' → LLM이 Retrieve_Status Tool 호출 → 결과(504) 수신 → '게이트웨이 타임아웃으로 추정' 답변"},{"term":"RAG (Retrieval Augmented Generation)","desc":"기존 LLM Workflow에 검색 Tool을 추가하는 패턴.\n입력 변수 → 검색(결과 분석) → LLM → 결과\nLLM이 모르는 내용이나 정확하게 알지 못하는 내용에도 답변 가능\n→ 사내 문서, 최신 정보, 실시간 데이터 기반 답변 구현\nLangChain Tools 섹션에서 RAG를 Tool 형태로 통합"},{"term":"Function Calling 구조","desc":"함수 Schema 정의: 이름, 설명, 파라미터를 JSON 형태로 LLM에 전달\nLLM 판단: 질문에 맞는 함수 선택 → <functioncall> 태그로 실행 중단\nTool 실행 후 재입력: 함수 실행 결과를 다시 LLM에 전달 → 최종 답변 생성\n대표 데이터셋: Glaive-function-calling-v2 (Fine Tuning용)"},{"term":"다단 Tool Calling","desc":"복잡한 작업을 여러 Tool을 순서대로 호출해 처리.\n예: '1995년생 나이 × 1 × 9 × 9 × 5 계산'\n→ LLM이 계획 수립 → 곱하기 Tool 반복 호출 → 단계별 결과 누적 → 최종 답변\n주의사항:\n· 부정확한 Tool 사용 시 심각한 결과 초래\n· Tool 반복 실행·수정·보안 고려 필요"}],"keypoints":["Tool Calling = LLM이 스스로 외부 함수 호출 여부를 판단하고 실행","RAG = 검색 Tool을 LLM Workflow에 추가 → 모르는 정보도 답변 가능","Function Calling 구조: 함수 Schema 정의 → LLM 판단 → 실행 중단 → 결과 재입력","다단 Tool Calling = 복잡한 작업을 여러 Tool 순차 호출로 처리","Tool 오용 시 심각한 결과 초래 → 반복 실행·수정·보안 고려 필수"],"quiz":[{"q":"LLM Tool Calling의 핵심 특징은?","options":["LLM이 항상 모든 Tool을 순서대로 실행한다","LLM이 스스로 판단해 필요한 외부 함수를 선택·호출한다","사용자가 직접 Tool을 선택해야 한다","Tool은 항상 병렬로 실행된다"],"answer":1,"exp":"Tool Calling의 핵심은 LLM이 사용자 입력을 분석해 어떤 Tool이 필요한지 스스로 판단하고, 적절한 함수를 선택해 호출하는 것입니다."},{"q":"Function Calling에서 LLM이 함수 호출이 필요하다고 판단했을 때 일어나는 일은?","options":["즉시 최종 답변을 생성한다","<functioncall> 태그로 실행을 중단하고, 함수 실행 결과를 다시 받아 최종 답변을 생성한다","사용자에게 확인을 요청한다","새로운 프롬프트를 생성한다"],"answer":1,"exp":"LLM은 함수 호출이 필요하다고 판단하면 <functioncall> 태그로 실행을 중단하고, 외부에서 함수를 실행한 결과를 다시 받아 최종 답변을 완성합니다."},{"q":"RAG를 LangChain Tool로 구현하는 핵심 이유는?","options":["처리 속도를 높이기 위해","LLM이 모르거나 부정확한 정보를 외부 검색으로 보완해 정확한 답변을 제공하기 위해","비용을 절감하기 위해","프롬프트를 짧게 만들기 위해"],"answer":1,"exp":"RAG는 LLM의 학습 데이터에 없는 최신 정보나 사내 문서 등을 검색 Tool로 조회해 LLM에 제공함으로써, LLM이 정확한 답변을 생성할 수 있도록 합니다."}]},{"id":"ch22","chapter":"5","book":"4","title":"LangChain Agents","emoji":"🤖","concepts":[{"term":"Agent란?","desc":"LLM이 Reasoning(추론)을 통해 스스로 Tool을 선택·실행하며 목표를 달성하는 자율 시스템.\nAgent의 3요소:\n① LLM (두뇌 역할)\n② Tools (행동 수단)\n③ Reasoning (추론 능력)\n+ 4번째 필요 역량: 복잡한 작업에서 연속적이고 정확한 Tool 사용을 위한 강력한 Reasoning"},{"term":"ReAct (Reasoning + Acting)","desc":"Agent의 핵심 작동 원리: Reasoning과 Acting을 교대로 반복.\nReAct 루프: Thought(생각) → Action(도구 실행) → Observation(결과 관찰) → 반복\n예: 질문 → '어떤 정보가 필요한가?' (Thought) → 검색 실행 (Action) → 결과 확인 (Observation) → 충분하면 최종 답변"},{"term":"Multi Agent 시스템","desc":"여러 Agent가 협력해 복잡한 작업을 처리하는 구조.\n3가지 패턴:\n· Supervisor: 중앙 Agent가 하위 Agent를 병렬 실행·제어\n· Network: Agent들이 상황별 경로를 재구성하며 협력\n· Hierarchical: 계층 구조, 단일 Supervisor 통제 불가 시 사용\n→ 패턴 선택이 시스템 성능·복잡도에 큰 영향"},{"term":"Tool Calling in LLM (2025 트렌드)","desc":"일부 모델(예: Gemma 3)은 Tool Message 이해 불가, 파생된 출력 생성 능력 부족.\n해결 방법:\n① Prompt로 응답 형식 안내 → 형식 문제 완화\n② Fine Tuning을 통한 Tool reactor 학습 → 근본적 해결\n→ 2025년 현재도 모든 모델이 Tool Calling을 완벽히 지원하지는 않음"}],"keypoints":["Agent = LLM + Tools + Reasoning → 목표를 스스로 달성하는 자율 시스템","ReAct = Thought(생각) → Action(실행) → Observation(관찰) 루프 반복","Multi Agent 3패턴: Supervisor(중앙제어), Network(경로 재구성), Hierarchical(계층)","Agent 주의: 부정확한 Tool 사용 → 심각한 결과, 반복·수정·보안 필수","2025년 일부 모델은 Tool Calling 미지원 → Prompt 안내 or Fine Tuning으로 해결"],"quiz":[{"q":"LangChain Agent의 핵심 3요소는?","options":["데이터베이스 + API + 서버","LLM + Tools + Reasoning","Prompt + Parser + Chain","RAG + Memory + Output"],"answer":1,"exp":"Agent는 두뇌 역할의 LLM, 행동 수단인 Tools, 그리고 어떤 Tool을 어떻게 쓸지 판단하는 Reasoning 능력 3가지로 구성됩니다."},{"q":"ReAct(Reasoning + Acting)의 작동 순서로 올바른 것은?","options":["Action → Thought → Observation 순서 반복","Thought → Action → Observation 순서 반복","Observation → Action → Thought 순서 반복","한 번만 실행하고 종료"],"answer":1,"exp":"ReAct는 Thought(어떤 Tool이 필요한가 추론) → Action(Tool 실행) → Observation(결과 관찰) 순서를 목표 달성까지 반복합니다."},{"q":"Multi Agent에서 'Supervisor' 패턴의 특징은?","options":["Agent들이 서로 동등하게 협력한다","중앙 Agent가 하위 Agent들을 병렬 실행하고 제어한다","계층 구조로 여러 Supervisor가 존재한다","Agent들이 상황에 따라 경로를 재구성한다"],"answer":1,"exp":"Supervisor 패턴은 중앙의 Supervisor Agent가 여러 하위 Agent를 병렬 실행하고 중앙에서 제어하는 구조입니다."}]},{"id":"ch23","chapter":"1","book":"5","title":"RAG 개념과 아키텍처","emoji":"🔍","concepts":[{"term":"LLM 생성 결과물의 한계","desc":"LLM은 확률 기반 생성 모델로 다양한 데이터로 학습한 토큰으로 질의응답 → 패턴뿐 아니라 지식 수준도 높음.\n하지만 한계 존재:\n· 학습 데이터 이후 최신 정보 모름 (Knowledge Cutoff)\n· 환각(Hallucination): 없는 정보를 있는 것처럼 생성\n· 사내 문서 등 비공개 데이터 미학습\n→ RAG로 이 한계를 보완"},{"term":"RAG란? (Retrieval Augmented Generation)","desc":"검색(Retrieval) + 증강(Augmented) + 생성(Generation).\nLLM의 In-Context Learning(입력 데이터를 이해하고 활용하는 능력)을 활용.\n외부 데이터베이스에서 관련 정보를 검색 → LLM 입력에 포함 → 정확한 답변 생성\n= 검색 증강 생성: 검색 + In-Context Learning"},{"term":"RAG vs 파인튜닝(Fine-Tuning)","desc":"RAG: 벡터 DB 구축만 필요. 구축 비용·시간 적음. 최신 정보 반영 용이.\n파인튜닝: GPU 리소스 + 학습 시간 필요. 보다 많은 시간과 작업 비용 소요.\n→ 사내 문서 Q&A 등 대부분의 경우 RAG가 먼저 시도할 방법"},{"term":"RAG의 5-step 기본 파이프라인","desc":"[Preprocessing 단계]\n① Corpus(문서 모음) 수집\n② Chunking(청킹): 문서를 적절한 단위로 분할\n③ Embedding + Vector DB 저장 / TF-IDF 인덱싱\n\n[Runtime 단계]\n④ Query 입력 → Top K 검색 (유사도 기반)\n⑤ Rank Fusion → Top K Chunks → LLM 생성 → Response"},{"term":"Context 구성: Top K Search","desc":"RAG에서 컨텍스트 구성 방법: 임베딩 벡터/키워드 기반 유사도 Top K Search\n· 임베딩/인덱싱을 통해 텍스트를 벡터화\n· 쿼리 벡터와 문서 벡터 사이의 비교를 통해 가장 유사한 K개 청크 선택\n→ 선택된 청크를 LLM 프롬프트에 포함해 답변 생성"}],"keypoints":["RAG = Retrieval(검색) + Augmented(증강) + Generation(생성) — LLM 한계 보완","LLM 한계 3가지: 최신 정보 없음 / 환각(Hallucination) / 비공개 데이터 미학습","RAG vs 파인튜닝: RAG는 벡터 DB만 구축 (빠르고 저렴), 파인튜닝은 GPU+시간 필요","RAG 5단계: 문서 수집 → 청킹 → 임베딩/인덱싱 → Top K 검색 → LLM 생성","Top K Search = 쿼리와 문서 벡터 유사도 비교 → 가장 관련 높은 K개 청크 선택"],"quiz":[{"q":"RAG가 해결하는 LLM의 핵심 한계 3가지는?","options":["속도, 비용, 크기","최신 정보 부재, 환각(Hallucination), 비공개 데이터 미학습","언어, 문법, 번역","입력 길이, 출력 길이, 응답 속도"],"answer":1,"exp":"RAG는 LLM의 세 가지 한계—학습 이후 최신 정보 없음, 없는 정보를 만들어내는 환각, 사내 문서 등 비공개 데이터 미학습—를 외부 검색으로 보완합니다."},{"q":"RAG 파이프라인에서 Preprocessing 단계에 해당하지 않는 것은?","options":["Chunking(청킹)","Embedding 벡터 저장","TF-IDF 인덱싱","LLM으로 최종 답변 생성"],"answer":3,"exp":"LLM으로 최종 답변을 생성하는 것은 Runtime 단계입니다. Preprocessing 단계는 문서 수집 → 청킹 → 임베딩/인덱싱까지입니다."},{"q":"RAG와 파인튜닝의 가장 큰 차이점은?","options":["RAG는 더 정확하다","RAG는 벡터 DB 구축만 필요해 파인튜닝보다 시간·비용이 적게 든다","파인튜닝은 최신 정보를 더 잘 반영한다","RAG는 GPU가 반드시 필요하다"],"answer":1,"exp":"RAG는 벡터 DB 구축만 하면 되어 빠르고 저렴합니다. 파인튜닝은 GPU 리소스와 학습 시간이 필요해 더 많은 비용과 시간이 소요됩니다."}]},{"id":"ch24","chapter":"2","book":"5","title":"RAG 데이터 전처리 (1) — Indexing","emoji":"📄","concepts":[{"term":"Indexing: 데이터 준비하기","desc":"RAG Preprocessing의 핵심 단계. 문서를 검색 가능한 형태로 가공.\n주요 작업:\n① Document Loading: 다양한 형식의 문서 불러오기\n② Chunking: 문서를 적절한 단위로 분할\n③ Embedding: 청크를 벡터로 변환 후 Vector DB 저장"},{"term":"청킹(Chunking)이란?","desc":"긴 문서를 LLM이 처리할 수 있는 적절한 크기로 분할하는 작업.\n중요성: 단순히 잘라서 필요한 부분만 제공하면 맥락을 이해하기 어려움.\n예: 긴 소설을 RAG로 처리할 경우, 일부 내용만 보면 정확성 감소.\n좋은 청킹 = 적절한 범위 + 이해 가능한 단위"},{"term":"Document Loader & Splitter","desc":"LangChain이 제공하는 3가지 도구:\n· Document Loader: 다양한 포맷(PDF, CSV, HTML 등) 문서를 불러오는 파서\n· Splitter: 텍스트를 일정 크기·규칙으로 분할\n· Semantic Chunker: 의미 단위로 문장을 묶어 분할 (단순 길이 기준이 아닌 의미 기반)\n→ 문서 유형과 목적에 맞는 도구 선택 중요"},{"term":"청킹 전략: 크기 vs 의미","desc":"Fixed Size Chunking: 일정한 토큰/문자 수로 분할. 간단하지만 문맥이 끊길 수 있음.\nSemantic Chunking: 의미적으로 유사한 문장들을 묶어 분할. 문맥 보존 우수.\nOverlap(겹침): 청크 간 일부 내용을 겹치게 해 문맥 연속성 유지.\n→ 정답은 없음, 데이터 특성에 따라 실험 필요"}],"keypoints":["Indexing 3단계: Document Loading → Chunking → Embedding → Vector DB 저장","청킹 = 긴 문서를 적절한 단위로 분할 (맥락 보존이 핵심)","LangChain 3도구: Document Loader / Splitter / Semantic Chunker","Semantic Chunker = 단순 크기 기준 X, 의미 단위로 문장을 묶어 분할","Overlap(겹침) 설정으로 청크 간 문맥 연속성 유지 가능"],"quiz":[{"q":"청킹(Chunking)이 중요한 이유는?","options":["문서를 더 작게 만들어 저장 공간을 줄이기 위해","단순히 자르면 맥락이 끊겨 LLM이 내용을 이해하기 어렵기 때문","임베딩 속도를 높이기 위해","TF-IDF 계산을 쉽게 하기 위해"],"answer":1,"exp":"청킹은 단순한 분할이 아니라 LLM이 의미 있게 이해할 수 있는 단위로 나누는 것이 핵심입니다. 잘못된 청킹은 맥락을 끊어 답변 정확도를 낮춥니다."},{"q":"LangChain의 Semantic Chunker가 일반 Splitter와 다른 점은?","options":["더 빠르게 분할한다","일정 크기 기준이 아닌 의미 단위로 문장을 묶어 분할한다","PDF만 처리할 수 있다","청크 크기가 항상 동일하다"],"answer":1,"exp":"Semantic Chunker는 단순히 글자/토큰 수로 자르는 것이 아니라, 의미적으로 유사한 문장들을 함께 묶어 청크를 구성합니다."},{"q":"청크 간 Overlap(겹침)을 설정하는 이유는?","options":["저장 공간을 늘리기 위해","청크 간 문맥 연속성을 유지하기 위해","검색 속도를 높이기 위해","중복 데이터를 제거하기 위해"],"answer":1,"exp":"Overlap은 인접한 청크 간 일부 내용을 겹치게 해, 청크 경계에서 문맥이 끊기는 문제를 방지하고 연속성을 유지합니다."}]},{"id":"ch25","chapter":"3","book":"5","title":"RAG 데이터 전처리 (2·3) — Embedding & 검색","emoji":"🧮","concepts":[{"term":"Text Embedding: 텍스트 벡터화","desc":"청킹된 텍스트를 숫자 벡터로 변환해 Vector Database에 저장.\nEmbedding Model: 텍스트의 의미를 반영한 고차원 벡터 생성\nVector Database: 벡터를 저장하고 유사도 검색을 빠르게 수행하는 DB (예: Chroma, FAISS, Pinecone)\n→ 쿼리도 동일한 임베딩 모델로 벡터화 후 DB에서 유사 벡터 검색"},{"term":"비교 메트릭: Cosine Distance","desc":"Vector Database의 유사도 측정 방식.\nCosine Distance = 1 - Cosine Similarity\n두 벡터가 이루는 각도의 코사인 유사도를 구한 후 음수를 취해 만듦.\n→ 값이 작을수록(0에 가까울수록) 더 유사함\n대부분의 Vector DB는 Cosine Distance를 기본 메트릭으로 사용"},{"term":"Semantic 검색 vs Lexical 검색","desc":"Semantic 검색: 의미를 파악할 수 있는 Transformer 기반 방식. 동의어·유사 표현도 검색 가능.\nLexical 검색(키워드): TF-IDF, BM25 등 키워드 매칭 방식. 정확한 단어 일치에 강점.\nHybrid 검색: Semantic + Lexical 결합 → 상호 보완\nRank Fusion: 두 검색 결과를 합쳐 최종 순위 결정"},{"term":"Bi-Encoder vs Cross-Encoder","desc":"Bi-Encoder: 쿼리와 문서를 각각 따로 인코딩 → 빠른 검색 가능 (벡터 DB의 기본 방식)\nCross-Encoder: 쿼리+문서를 함께 인코딩 → 더 정확하지만 느림\nCross-Encoder 문제점: 10개 문장 간 거리를 구할 때 ₁₀C₂=45번 검색 필요 → 확장성 떨어지고 계산량 많음\n→ 실제 RAG: Bi-Encoder로 후보 검색 → Cross-Encoder로 재순위(Reranking)"}],"keypoints":["Vector DB = 임베딩 벡터를 저장하고 유사도 검색하는 DB (Chroma, FAISS 등)","Cosine Distance = 1 - Cosine Similarity (값이 작을수록 더 유사)","Semantic 검색(의미 기반) vs Lexical 검색(키워드 매칭) → Hybrid로 결합","Bi-Encoder(빠름, 각각 인코딩) vs Cross-Encoder(정확, 함께 인코딩 → 느림)","실제 RAG: Bi-Encoder로 후보 검색 → Cross-Encoder로 Reranking"],"quiz":[{"q":"Cosine Distance가 0에 가까울수록 두 벡터는?","options":["더 다르다","더 유사하다","관계가 없다","크기가 같다"],"answer":1,"exp":"Cosine Distance = 1 - Cosine Similarity이므로, 값이 0에 가까울수록 Cosine Similarity가 1에 가깝다는 의미 → 두 벡터가 매우 유사함을 나타냅니다."},{"q":"RAG에서 Hybrid 검색을 사용하는 이유는?","options":["비용을 줄이기 위해","Semantic 검색과 Lexical 검색이 각각 약점이 있어 결합해 상호 보완하기 위해","처리 속도를 높이기 위해","임베딩 모델이 필요 없어지기 때문에"],"answer":1,"exp":"Semantic 검색은 의미는 잘 잡지만 정확한 키워드 매칭에 약하고, Lexical 검색은 반대입니다. Hybrid 검색은 두 방식을 결합해 서로의 약점을 보완합니다."},{"q":"실제 RAG 시스템에서 Bi-Encoder와 Cross-Encoder를 함께 쓰는 이유는?","options":["Bi-Encoder가 더 정확하기 때문","Bi-Encoder로 빠르게 후보를 검색하고 Cross-Encoder로 정확하게 재순위하기 위해","Cross-Encoder가 더 빠르기 때문","두 방식이 동일한 결과를 내기 때문"],"answer":1,"exp":"Bi-Encoder는 빠르지만 덜 정확하고, Cross-Encoder는 정확하지만 느립니다. 먼저 Bi-Encoder로 후보군을 좁힌 후, Cross-Encoder로 재순위(Reranking)하면 속도와 정확도를 모두 얻을 수 있습니다."}]},{"id":"ch26","chapter":"4","book":"5","title":"RAG 성능 고도화 방법","emoji":"⚙️","concepts":[{"term":"Contextual Retrieval","desc":"청크에 독자적으로 충분한 맥락 정보를 추가하는 기법.\n문제: 단순 청크는 전체 문서에서 잘려나와 독립적으로 의미 파악이 어려움.\n해결: 청크 앞에 문서 전체 맥락을 요약한 설명 추가\n예: '이용자 수가 전년 대비 37% 증가...' → '이 Chunk는 A회사의 LLM 기반 노트 작성 앱에 대한 2025년 보고서의 내용입니다. 2024년 이용자 수는 OO명이었습니다. [기존 Chunk 위치]'\n→ 독자적으로 충분한 의미를 갖도록 개선"},{"term":"HyDE (Hypothetical Document Embedding)","desc":"쿼리를 그대로 검색하지 않고, LLM으로 '가상의 답변 문서'를 먼저 생성한 후 그 문서로 검색하는 기법.\n원리: 쿼리 벡터보다 가상 답변 벡터가 실제 문서와 더 유사할 가능성이 높음.\n장점: 대중적으로 많이 쓰이는 방식, 실제 논문에서도 성능 향상 평가.\n한계: GPT가 전혀 모르는 내용일 때 HyDE 불가 → Step back 필요\n→ 프로세싱의 모든 단계에 LLM 활용 가능"},{"term":"Context Optimization","desc":"Top K에 정답이 포함되어 있어도 전체 Context 길이가 증가하면 성능이 감소하는 현상 존재.\n임베딩 리트리버: 검색을 많이 하면 유사한 오답 생성\n키워드 리트리버: 뒤로 갈수록 오류 다수 생성\n→ 적절한 K값 설정이 중요: 너무 적으면 정보 부족, 너무 많으면 노이즈 증가"},{"term":"RAG 성능 고도화 전략 요약","desc":"쿼리 개선: HyDE (가상 문서 생성), Step back (추상화된 쿼리로 검색)\n청크 개선: Contextual Retrieval (맥락 추가), Semantic Chunking\n검색 개선: Hybrid Search (Semantic + Lexical), Reranking (Cross-Encoder)\n컨텍스트 최적화: 적절한 Top K 설정, 불필요한 정보 제거\n→ 각 단계에 LLM을 활용해 품질 개선 가능"}],"keypoints":["Contextual Retrieval = 청크에 문서 전체 맥락 요약을 추가해 독립적 의미 부여","HyDE = 쿼리로 '가상 답변 문서'를 먼저 생성 → 그 문서로 검색 (성능 향상)","Context 길이 증가 시 성능 감소 주의 → 적절한 Top K 설정 필수","RAG 고도화 4영역: 쿼리 개선 / 청크 개선 / 검색 개선 / 컨텍스트 최적화","RAG 모든 처리 단계에 LLM을 활용해 품질 개선 가능"],"quiz":[{"q":"Contextual Retrieval의 핵심 아이디어는?","options":["청크 크기를 줄이는 것","청크에 문서 전체 맥락 요약을 추가해 독립적으로도 충분한 의미를 갖게 하는 것","더 많은 청크를 검색하는 것","키워드 검색만 사용하는 것"],"answer":1,"exp":"Contextual Retrieval은 단순 청크에 '이 청크가 어떤 문서의 어떤 부분인지' 설명을 추가해, 청크만 보더라도 독자적으로 의미를 파악할 수 있게 합니다."},{"q":"HyDE(Hypothetical Document Embedding)의 작동 원리는?","options":["쿼리를 키워드로 분해해 검색한다","LLM으로 가상의 답변 문서를 먼저 생성하고, 그 문서로 검색한다","여러 쿼리를 병렬로 검색한다","문서를 가상으로 요약해 저장한다"],"answer":1,"exp":"HyDE는 실제 쿼리 대신 LLM이 생성한 '가상 답변 문서'로 검색합니다. 가상 문서가 실제 답변 문서와 더 유사한 벡터를 가질 가능성이 높아 검색 품질이 향상됩니다."},{"q":"Top K 검색에서 K값을 너무 크게 설정하면 발생하는 문제는?","options":["검색 결과가 없어진다","Context 길이가 증가해 오히려 LLM 성능이 저하될 수 있다","비용이 0이 된다","임베딩 속도가 빨라진다"],"answer":1,"exp":"Top K가 너무 크면 관련 없는 청크까지 포함되어 Context 노이즈가 증가하고, LLM이 정답을 찾기 어려워져 성능이 오히려 감소할 수 있습니다."}]},{"id":"ch27","chapter":"5","book":"5","title":"멀티모달 RAG","emoji":"🖼️","concepts":[{"term":"멀티모달 RAG의 필요성","desc":"일반 RAG는 텍스트만 처리. 실제 문서에는 이미지, 표(테이블), 차트가 포함되는 경우가 많음.\n멀티모달 RAG: 텍스트뿐 아니라 이미지·테이블도 함께 파싱·인덱싱·검색·생성\n→ 더 풍부하고 정확한 답변 가능"},{"term":"Docling: 이미지와 테이블 파싱","desc":"문서에서 이미지와 테이블을 파싱하는 도구.\n문서에 맞는 다양한 파서(Parser) 사용 → 문서를 불러오는 파서\nLangChain의 Document Loader: 다양한 파서로 데이터를 미리 적절한 형태로 불러와 처리 가능\n→ PDF의 이미지, 차트, 표를 구조화된 형태로 추출"},{"term":"멀티모달 RAG 처리 방식","desc":"방법 1: 이미지/표를 텍스트로 변환(캡셔닝) → 기존 텍스트 RAG와 동일하게 처리\n방법 2: 멀티모달 임베딩 모델 사용 → 이미지 자체를 벡터로 변환해 검색\n방법 3: 멀티모달 LLM 활용 → 이미지 + 텍스트를 함께 LLM에 입력해 답변 생성\n→ 문서 유형과 목적에 따라 방법 선택"}],"keypoints":["멀티모달 RAG = 텍스트 + 이미지 + 테이블까지 함께 처리하는 RAG","Docling = PDF의 이미지·테이블을 파싱하는 도구","LangChain Document Loader = 다양한 파서로 문서를 적절한 형태로 불러오기","멀티모달 처리 3방법: 텍스트 변환 / 멀티모달 임베딩 / 멀티모달 LLM 직접 입력","실제 문서는 텍스트만 있지 않음 → 멀티모달 RAG로 더 완전한 정보 처리"],"quiz":[{"q":"멀티모달 RAG가 필요한 이유는?","options":["텍스트 처리 속도를 높이기 위해","실제 문서에 이미지·테이블·차트가 포함되는 경우가 많아 텍스트만으로는 불완전하기 때문","비용을 절감하기 위해","더 작은 모델을 사용하기 위해"],"answer":1,"exp":"실제 업무 문서는 텍스트 외에도 이미지, 표, 차트가 포함됩니다. 멀티모달 RAG는 이런 요소들도 함께 파싱·검색·생성해 더 완전한 답변을 제공합니다."},{"q":"Docling의 역할은?","options":["텍스트를 임베딩 벡터로 변환한다","PDF 등 문서에서 이미지와 테이블을 파싱하는 도구","LLM API를 호출한다","청크 간 유사도를 계산한다"],"answer":1,"exp":"Docling은 PDF 등의 문서에서 이미지와 테이블을 파싱해 구조화된 형태로 추출하는 도구입니다. LangChain의 Document Loader와 연동해 사용합니다."},{"q":"멀티모달 RAG에서 이미지를 처리하는 방법이 아닌 것은?","options":["이미지를 텍스트로 변환(캡셔닝) 후 기존 RAG처럼 처리","멀티모달 임베딩 모델로 이미지를 직접 벡터화","이미지를 삭제하고 텍스트만 사용","멀티모달 LLM에 이미지와 텍스트를 함께 입력"],"answer":2,"exp":"이미지를 삭제하는 것은 멀티모달 RAG의 목적에 반합니다. 올바른 방법은 ① 텍스트 변환, ② 멀티모달 임베딩, ③ 멀티모달 LLM 직접 입력 세 가지입니다."}]},{"id":"ch28","chapter":"1","book":"6","title":"파인튜닝 기초와 딜레마","emoji":"🏥","concepts":[{"term":"파인튜닝(Fine Tuning)의 본질","desc":"사전 학습을 마친 범용 모델에 특정 기업이나 도메인의 전문 지식과 응대 말투를 추가로 훈련시켜(뇌수술), 특정 목적에 특화된 A급 전문가 모델로 개조하는 과정."},{"term":"풀 파인튜닝(Full Fine-Tuning)","desc":"LLM이 가진 수십~수백억 개의 신경망 가중치(파라미터) 전체를 새롭게 업데이트하는 방식. 비용과 시간, 그리고 초거대 GPU 리소스가 요구되는 무거운 방식."},{"term":"재앙적 망각(Catastrophic Forgetting)","desc":"새로운 도메인 데이터에 모델이 과도하게 적응하면서, 기존에 사전 학습으로 깨우쳐 둔 유용한 일반 상식과 언어 능력을 백지장처럼 잊어버리는 부작용 현상."}],"quiz":[{"q":"새로운 지식을 깊게 학습하다가 모델이 기존의 일반 상식을 잊어버리는 치명적 현상을 무엇이라 하는가?","options":["환각(Hallucination)","과적합(Overfitting)","재앙적 망각(Catastrophic Forgetting)","인컨텍스트 러닝(In-Context Learning)"],"answer":2,"exp":"재앙적 망각(Catastrophic Forgetting)은 풀 파인튜닝 시 기존 네트워크 가중치가 과도하게 변형되면서 발생하는 대표적인 부작용입니다."},{"q":"파인튜닝(Fine-Tuning)의 목적과 거리가 먼 것은?","options":["사내 전문 용어와 특정 톤앤매너를 모델에 내재화하기 위해","실시간으로 변하는 최신 뉴스 정보를 주입하기 위해","기존 모델의 가중치를 업데이트하여 특정 도메인의 전문가로 개조하기 위해","매뉴얼(프롬프트) 없이도 특정 지시를 수행하도록 만들기 위해"],"answer":1,"exp":"실시간으로 변하는 최신 정보를 위해 매번 파인튜닝을 하면 비용과 시간이 막대하게 듭니다. 이런 경우는 검색 기반의 RAG를 사용하는 것이 정답입니다."}],"keypoints":["파인튜닝은 외부 참고가 아니라 모델 자체의 뇌(가중치)를 개조하는 과정","풀 파인튜닝은 전체 가중치를 변경하므로 비용과 리소스가 막대함","재앙적 망각: 새로운 지식 학습 시 기존 상식을 잊는 부작용 현상","실시간 업데이트나 단순 지식 검색에는 파인튜닝보다 RAG가 효율적임"],"codeExample":"# 파인튜닝을 위한 데이터셋 준비 예시 (JSONL 포맷)\n{\"messages\": [{\"role\": \"system\", \"content\": \"친절한 고객센터 챗봇입니다.\"}, {\"role\": \"user\", \"content\": \"배송이 지연되고 있어요.\"}, {\"role\": \"assistant\", \"content\": \"고객님, 배송 지연으로 불편을 드려 정말 죄송합니다. 운송장 번호를 알려주시면 즉시 확인해드리겠습니다.\"}]}\n{\"messages\": [{\"role\": \"system\", \"content\": \"친절한 고객센터 챗봇입니다.\"}, {\"role\": \"user\", \"content\": \"환불 규정이 어떻게 되나요?\"}, {\"role\": \"assistant\", \"content\": \"수령 후 7일 이내에 미개봉 상태인 경우 환불이 가능합니다.\"}]}"},{"id":"ch29","chapter":"2","book":"6","title":"가성비 튜닝(PEFT)과 LoRA","emoji":"✂️","concepts":[{"term":"PEFT (Parameter-Efficient Fine-Tuning)","desc":"풀 파인튜닝의 막대한 비용과 망각 문제를 해결하기 위해, 모델 전체 가중치 중 1% 미만의 극히 일부 가중치만 선별하여 효율적으로 업데이트하는 가성비 튜닝 기술."},{"term":"LoRA (Low-Rank Adaptation)","desc":"PEFT를 구현하는 대표적이고 가장 널리 쓰이는 기법. 사전 학습된 거대 원본 모델의 가중치는 완전히 얼려두고(Freeze), 그 옆에 작은 '추가 어댑터(포스트잇)' 층을 삽입하여 그 어댑터만 훈련시킴."},{"term":"LoRA의 실무적 장점","desc":"그래픽카드(VRAM) 요구량을 극적으로 줄여 일반 데스크톱에서도 훈련이 가능해짐. 또한 하나의 뼈대 모델에 용도별(코딩용, 마케팅용) 어댑터만 게임팩처럼 뗐다 붙였다 스위칭할 수 있어 확장성이 뛰어남."}],"quiz":[{"q":"거대 원본 모델의 파라미터는 얼려두고, 작고 가벼운 어댑터 층만 추가하여 훈련시키는 대표적인 가성비 파인튜닝 기법은?","options":["RAG","LoRA","Prompt Chaining","TF-IDF"],"answer":1,"exp":"LoRA(Low-Rank Adaptation)는 백과사전에 포스트잇을 붙여 훈련하듯, 적은 리소스로도 우수한 튜닝 효과를 내는 핵심 PEFT 기법입니다."},{"q":"PEFT(Parameter-Efficient Fine-Tuning)의 장점으로 옳지 않은 것은?","options":["풀 파인튜닝보다 적은 GPU VRAM을 요구한다","학습 소요 시간이 획기적으로 단축된다","원본 지식을 건드리지 않아 재앙적 망각 현상을 방지할 수 있다","환각 현상을 0%로 완전히 제거할 수 있다"],"answer":3,"exp":"환각(Hallucination)은 LLM의 확률적 생성 방식의 본질적 한계이므로 파인튜닝이나 PEFT만으로 100% 제거할 수는 없습니다."}],"keypoints":["PEFT = 비용을 획기적으로 줄이는 파라미터 효율적 미세조정 방식","LoRA = 기존 뇌는 얼리고(Freeze) 작은 어댑터(포스트잇)만 덧붙여 훈련하는 기술","LoRA 장점 1: VRAM 요구량 감소 및 재앙적 망각 방지","LoRA 장점 2: 여러 어댑터를 목적에 따라 스위칭(갈아 끼우기) 용이"],"codeExample":"# LoRA 어댑터 적용을 위한 허깅페이스(PEFT) 설정 예시\nfrom peft import LoraConfig, get_peft_model\nfrom transformers import AutoModelForCausalLM\n\n# 1. 뼈대 모델 로드 (가중치는 고정됨)\nmodel = AutoModelForCausalLM.from_pretrained(\"base-llm-model\")\n\n# 2. LoRA 설정값 지정 (포스트잇의 크기와 위치 설정)\nlora_config = LoraConfig(\n    r=8,               # 랭크(어댑터의 크기)\n    lora_alpha=32,     # 스케일링 계수\n    target_modules=[\"q_proj\", \"v_proj\"], # 훈련을 삽입할 모듈 타겟팅\n    lora_dropout=0.05,\n    bias=\"none\",\n    task_type=\"CAUSAL_LM\"\n)\n\n# 3. 모델에 LoRA 어댑터 장착\npeft_model = get_peft_model(model, lora_config)\n\n# 4. 전체 파라미터 중 단 ~1%의 어댑터 가중치만 훈련 진행\npeft_model.print_trainable_parameters()\n# 출력 예시: trainable params: 4,194,304 || all params: 7,000,000,000 || trainable%: 0.0599%"},{"id":"ch30","chapter":"3","book":"6","title":"AI 가치관 정렬, RLHF","emoji":"🤝","concepts":[{"term":"RLHF (인간 피드백 강화학습)","desc":"Reinforcement Learning from Human Feedback. 모델이 내놓은 여러 답변을 사람이 직접 읽고 더 낫거나 안전한 답변에 높은 순위와 보상(점수)을 주는 방식으로 AI의 언어 생성 방향을 길들이는 과정."},{"term":"정렬 (Alignment)","desc":"AI 모델의 출력 결과물이 인간이 의도한 목표, 윤리 기준, 가치관에 부합하도록 일치시키는 작업. RLHF는 정렬을 달성하기 위한 가장 효과적이고 필수적인 학습 수단임."},{"term":"안전하고 유용한 AI의 완성","desc":"사전 학습과 파인튜닝만 거친 AI는 위험하거나 편향된 정보를 그대로 내뱉을 수 있음. RLHF를 거치면서 AI는 '유용성(Helpful)'과 '무해성(Harmless)'을 동시에 갖춘 완성형 비서(예: 챗GPT)로 거듭나게 됨."}],"quiz":[{"q":"AI가 인간의 도덕적 기준이나 가치관에 맞게 무해하고 유용한 답변을 생성하도록 길들이는 기술은?","options":["LoRA","RLHF","Bag of Words","N-gram"],"answer":1,"exp":"RLHF는 사람의 피드백(보상)을 통해 AI의 행동 방식을 교정하고 가치관을 일치(Alignment)시키는 강화학습 기술입니다."},{"q":"RLHF 학습 과정에서 사람이 개입하는 가장 핵심적인 역할은 무엇인가?","options":["모델의 새로운 파라미터 구조를 직접 코딩한다","답변의 맞춤법 오류를 실시간으로 교정한다","모델이 생성한 여러 답변을 읽고 선호도에 따라 순위를 매겨 보상을 준다","인터넷 기사를 크롤링하여 데이터베이스를 구축한다"],"answer":2,"exp":"RLHF에서 인간 작업자(Labeler)는 모델이 생성한 여러 결과물을 비교하여 '어떤 것이 더 인간 친화적이고 안전한지' 순위 데이터를 생성하는 역할을 합니다."}],"keypoints":["RLHF = 인간의 피드백과 보상을 이용한 강화학습","정렬(Alignment) = AI의 출력물을 인간의 가치관, 윤리 기준과 일치시키는 것","사람의 개입: 여러 답변 중 더 나은 것을 골라 순위를 매기는 작업 수행","RLHF의 목적: 유용성(Helpful)과 무해성(Harmless)을 갖춘 완성형 AI 제작"]}];
+const BOOK_META = {"1":{"label":"📘 Python 기초","color":"#7c6aff","light":"#a594ff","glow":"rgba(124,106,255,0.18)"},"2":{"label":"📗 데이터 분석","color":"#3ecf8e","light":"#6eddb0","glow":"rgba(62,207,142,0.18)"},"3":{"label":"📙 LLM","color":"#ff6b6b","light":"#ff9999","glow":"rgba(255,107,107,0.18)"},"4":{"label":"🪄 프롬프트","color":"#f4c430","light":"#f7d770","glow":"rgba(244,196,48,0.18)"},"5":{"label":"🔎 RAG","color":"#00d2ff","light":"#66e3ff","glow":"rgba(0,210,255,0.18)"},"6":{"label":"🧠 파인튜닝","color":"#b142f5","light":"#cc85f8","glow":"rgba(177,66,245,0.18)"}};
+
+let activeBook = "3";
+let activeChIdx = 0;
+let activeTab = "concepts";
+
+const bookChapters = (book) => CURRICULUM.filter(c => c.book === book);
+
+// Apply book CSS vars
+function applyBookVars(book) {
+  const m = BOOK_META[book];
+  document.documentElement.style.setProperty('--tab-color', m.color);
+  document.documentElement.style.setProperty('--tab-light', m.light);
+  document.documentElement.style.setProperty('--tab-glow', m.glow);
+}
+
+// Render book tabs
+function renderBookTabs() {
+  const el = document.getElementById('book-tabs');
+  el.innerHTML = Object.entries(BOOK_META).map(([book, meta]) => {
+    const hasCh = CURRICULUM.some(c => c.book === book);
+    if (!hasCh) return '';
+    const active = activeBook === book;
+    return `<button class="book-tab ${active?'active':''}" 
+      style="--tab-color:${meta.color};--tab-light:${meta.light}"
+      onclick="changeBook('${book}')">${meta.label}</button>`;
+  }).join('');
+}
+
+// Render chapter nav
+function renderChNav() {
+  const chs = bookChapters(activeBook);
+  const el = document.getElementById('ch-nav');
+  el.innerHTML = chs.map((c, i) => 
+    `<button class="ch-btn ${i===activeChIdx?'active':''}"
+      onclick="changeCh(${i})">${c.emoji} CH${c.chapter} ${c.title}</button>`
+  ).join('');
+  // Scroll active into view
+  setTimeout(() => {
+    const active = el.querySelector('.ch-btn.active');
+    if (active) active.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }, 50);
+}
+
+// Quiz state per chapter
+const quizState = {};
+
+function getQuizState(chId) {
+  if (!quizState[chId]) quizState[chId] = { answers: {}, score: null };
+  return quizState[chId];
+}
+
+function renderMain() {
+  const chs = bookChapters(activeBook);
+  const ch = chs[activeChIdx] || chs[0];
+  if (!ch) return;
+  const m = BOOK_META[ch.book];
+  const qState = getQuizState(ch.id);
+
+  const hasTabs = {
+    concepts: ch.concepts?.length > 0,
+    keypoints: ch.keypoints?.length > 0,
+    code: !!ch.codeExample,
+    quiz: ch.quiz?.length > 0,
+  };
+
+  const tabDefs = [
+    { key: 'concepts', label: '📖 개념 정리' },
+    { key: 'keypoints', label: '⭐ 시험 포인트' },
+    { key: 'code', label: '💻 코드 예시' },
+    { key: 'quiz', label: '✏️ 퀴즈' },
+  ].filter(t => hasTabs[t.key]);
+
+  if (!tabDefs.find(t => t.key === activeTab)) activeTab = 'concepts';
+
+  let contentHTML = '';
+  if (activeTab === 'concepts' && ch.concepts) {
+    contentHTML = `
+      <div class="sec-title"><span class="dot" style="background:${m.color}"></span>핵심 개념</div>
+      <div class="grid">${ch.concepts.map(c => `
+        <div class="concept-card">
+          <div class="concept-term">${esc(c.term)}</div>
+          <div class="concept-desc">${esc(c.desc)}</div>
+        </div>`).join('')}
+      </div>`;
+  } else if (activeTab === 'keypoints' && ch.keypoints) {
+    contentHTML = `
+      <div class="sec-title"><span class="dot" style="background:var(--yellow)"></span>시험 출제 포인트</div>
+      ${ch.keypoints.map(pt => `
+        <div class="kp-item"><span>⭐</span><span>${esc(pt)}</span></div>`
+      ).join('')}`;
+  } else if (activeTab === 'code' && ch.codeExample) {
+    contentHTML = `
+      <div class="sec-title"><span class="dot" style="background:var(--green)"></span>코드 예시</div>
+      <pre class="code-block">${esc(ch.codeExample)}</pre>`;
+  } else if (activeTab === 'quiz' && ch.quiz) {
+    contentHTML = renderQuizHTML(ch, qState, m);
+  }
+
+  document.getElementById('main').innerHTML = `
+    <div class="ch-header">
+      <div class="ch-emoji-box">${ch.emoji}</div>
+      <div>
+        <div class="ch-meta">교재 ${ch.book} · Chapter ${ch.chapter}</div>
+        <div class="ch-name">${esc(ch.title)}</div>
+      </div>
+    </div>
+    <div class="tab-row">
+      ${tabDefs.map(t => `<button class="tab-btn ${activeTab===t.key?'active':''}" onclick="changeTab('${t.key}')">${t.label}</button>`).join('')}
+    </div>
+    <div id="content">${contentHTML}</div>
+  `;
+}
+
+function renderQuizHTML(ch, qState, m) {
+  const quizzes = ch.quiz;
+  const answered = Object.keys(qState.answers).length;
+  const pct = quizzes.length > 0 ? (answered / quizzes.length) * 100 : 0;
+
+  let html = `
+    <div class="progress-bar">
+      <div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${m.color},var(--green))"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:18px">${answered} / ${quizzes.length} 문제 풀이</div>
+  `;
+
+  quizzes.forEach((quiz, qi) => {
+    const chosen = qState.answers[qi];
+    const revealed = chosen !== undefined;
+    html += `<div class="quiz-card">
+      <div class="quiz-q">Q${qi+1}. ${esc(quiz.q)}</div>`;
+    quiz.options.forEach((opt, oi) => {
+      let cls = 'opt-btn';
+      let prefix = ['A','B','C','D'][oi] + '. ';
+      if (revealed) {
+        cls += ' disabled';
+        if (oi === quiz.answer) { cls += ' correct'; prefix = '✓ '; }
+        else if (oi === chosen) { cls += ' wrong'; prefix = '✗ '; }
+      }
+      html += `<button class="${cls}" onclick="handleAnswer('${ch.id}',${qi},${oi})">${prefix}${esc(opt)}</button>`;
+    });
+    if (revealed) html += `<div class="exp-box">💡 ${esc(quiz.exp)}</div>`;
+    html += '</div>';
+  });
+
+  if (answered === quizzes.length && qState.score === null) {
+    html += `<button class="submit-btn" style="background:${m.color}" onclick="submitQuiz('${ch.id}')" >채점하기</button>`;
+  }
+  if (qState.score !== null) {
+    const emoji = qState.score === quizzes.length ? '🎉' : qState.score >= quizzes.length/2 ? '👍' : '📖';
+    html += `<div class="score-box">
+      <div style="font-size:38px;margin-bottom:8px">${emoji}</div>
+      <div style="font-size:20px;font-weight:800;color:${m.light}">${qState.score} / ${quizzes.length} 정답</div>
+      <button class="reset-btn" onclick="resetQuiz('${ch.id}')">다시 풀기</button>
+    </div>`;
+  }
+  return html;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Actions
+window.changeBook = (book) => {
+  activeBook = book; activeChIdx = 0; activeTab = 'concepts';
+  applyBookVars(book); renderBookTabs(); renderChNav(); renderMain();
+};
+window.changeCh = (i) => {
+  activeChIdx = i; activeTab = 'concepts';
+  renderChNav(); renderMain();
+};
+window.changeTab = (tab) => {
+  activeTab = tab; renderMain();
+};
+window.handleAnswer = (chId, qi, oi) => {
+  const st = getQuizState(chId);
+  if (st.answers[qi] !== undefined) return;
+  st.answers[qi] = oi;
+  renderMain();
+};
+window.submitQuiz = (chId) => {
+  const ch = CURRICULUM.find(c => c.id === chId);
+  const st = getQuizState(chId);
+  st.score = ch.quiz.filter((q, i) => st.answers[i] === q.answer).length;
+  renderMain();
+};
+window.resetQuiz = (chId) => {
+  quizState[chId] = { answers: {}, score: null };
+  renderMain();
+};
+
+// Init
+applyBookVars(activeBook);
+renderBookTabs();
+renderChNav();
+renderMain();
+
+// PWA: Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// PWA: Install prompt (Android Chrome)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('install-banner');
+  banner.classList.remove('hidden');
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  }
+  document.getElementById('install-banner').classList.add('hidden');
+});
+document.getElementById('dismiss-btn').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.add('hidden');
+});
+
+// iOS Safari hint — show once
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone) {
+  const shown = localStorage.getItem('ios-hint-shown');
+  if (!shown) {
+    localStorage.setItem('ios-hint-shown', '1');
+    const banner = document.getElementById('install-banner');
+    banner.querySelector('p').textContent = '📱 Safari → 공유 버튼 → 홈 화면에 추가 하면 앱처럼 사용해요';
+    banner.querySelector('#install-btn').textContent = '알겠어요';
+    banner.querySelector('#install-btn').onclick = () => banner.classList.add('hidden');
+    banner.classList.remove('hidden');
+  }
+}
+</script>
+</body>
+</html>
