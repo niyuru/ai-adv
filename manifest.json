@@ -2,7 +2,7 @@
   "name": "AI ADV 셀프 학습",
   "short_name": "AI ADV",
   "description": "Samsung SDS AI 개발 교재 셀프 학습 가이드",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0f0f14",
   "theme_color": "#0f0f14",
